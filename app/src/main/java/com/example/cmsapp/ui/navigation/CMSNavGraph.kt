@@ -15,7 +15,8 @@ import com.example.cmsapp.ui.auth.AuthBaseScreen
 
 enum class CMSDestinations(val title: String) {
     Login(title = "login"),
-    Register(title = "register")
+    Register(title = "register"),
+    Main(title = "main")
 }
 
 @Composable
