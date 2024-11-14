@@ -9,8 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.example.cmsapp.ui.CMSAppScreen
 import com.example.cmsapp.ui.theme.CMSappTheme
-import com.example.cmsapp.ui.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +20,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             CMSappTheme{
                 Surface(modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background) {
+                color = MaterialTheme.colorScheme.background)
+                {
                     CMSAppScreen()
                 }
             }

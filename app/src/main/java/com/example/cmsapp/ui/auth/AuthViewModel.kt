@@ -13,9 +13,6 @@ class AuthViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
     private val _authUiState = MutableStateFlow(AuthUiState())
     val authUiState: StateFlow<AuthUiState> = _authUiState.asStateFlow()
 
-/*    var authUiState by mutableStateOf(AuthUiState())
-        private set*/
-
     fun toggleUiState(){
         /*Toggles between register/login. false = login screen, true = register screen*/
         _authUiState.update {

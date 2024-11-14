@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.cmsapp.ui.auth.AuthBaseScreen
+import com.example.cmsapp.ui.main.MainScreen
 
 enum class CMSDestinations(val title: String) {
     Login(title = "login"),
@@ -37,18 +37,20 @@ fun CMSNavGraph(navController: NavHostController,
                 onSwitch = {
                     navController.navigate(CMSDestinations.Register.name)
                 },
-                onSubmitClick = {},
+                onSubmitClick = {navController.navigate(CMSDestinations.Main.name)},
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             )
         }
         composable(route = CMSDestinations.Register.name) {
-            val context = LocalContext.current
             AuthBaseScreen(
                 onSwitch = { navController.navigate(CMSDestinations.Login.name) },
-                onSubmitClick = {},
+                onSubmitClick = {navController.navigate(CMSDestinations.Main.name)},
                 modifier = Modifier.fillMaxSize().padding(16.dp))
+        }
+        composable(route = CMSDestinations.Main.name){
+            MainScreen()
         }
     }
 }
