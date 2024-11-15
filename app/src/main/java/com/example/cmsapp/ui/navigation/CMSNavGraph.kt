@@ -24,7 +24,7 @@ fun CMSNavGraph(navController: NavHostController,
                 modifier: Modifier = Modifier) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentScreen = CMSDestinations.valueOf(
-        backStackEntry?.destination?.route ?: CMSDestinations.Login.name
+        backStackEntry?.destination?.route ?: CMSDestinations.Main.name
     )
     NavHost(
         navController = navController,

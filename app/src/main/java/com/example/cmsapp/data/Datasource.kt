@@ -2,25 +2,26 @@ package com.example.cmsapp.data
 
 import com.example.cmsapp.model.Movie
 import com.example.cmsapp.model.User
+import java.time.LocalDate
 import java.util.Date
 
 object Datasource {
     val users = listOf(
-        User(1, "Joao", "ffff", "jj@gmail.com", true),
-        User(2, "Jeswus", "aaa", "jc@heavn.com", false),
-        User(3, "Maria", "bbb", "maria@gmail.com", false),
-        User(4, "Napoleao", "aaaa", "napo@leao.fr", true),
-        User(5, "Alice", "ccc", "alice@wonderland.com", true),
-        User(6, "Bob", "ddd", "bob@builder.com", false),
-        User(7, "Carol", "eee", "carol@network.com", true),
-        User(8, "Dave", "fff", "dave@tech.com", false),
-        User(9, "Eve", "ggg", "eve@security.com", true),
-        User(10, "Frank", "hhh", "frank@data.com", false),
-        User(11, "Grace", "iii", "grace@compute.com", true),
-        User(12, "Heidi", "jjj", "heidi@crypto.com", false),
-        User(13, "Ivan", "kkk", "ivan@risk.com", true),
-        User(14, "Judy", "lll", "judy@codes.com", false),
-        User(15, "Mallory", "mmm", "mallory@attack.com", true)
+        User(1, "Joao", "ffff", "jj@gmail.com", true, LocalDate.of(1985, 1, 1)),
+        User(2, "Jeswus", "aaa", "jc@heavn.com", false, LocalDate.of(1992, 1, 1)),
+        User(3, "Maria", "bbb", "maria@gmail.com", false, LocalDate.of(1990, 1, 1)),
+        User(4, "Napoleao", "aaaa", "napo@leao.fr", true, LocalDate.of(1980, 1, 1)),
+        User(5, "Alice", "ccc", "alice@wonderland.com", true, LocalDate.of(1988, 1, 1)),
+        User(6, "Bob", "ddd", "bob@builder.com", false, LocalDate.of(1995, 1, 1)),
+        User(7, "Carol", "eee", "carol@network.com", true, LocalDate.of(1987, 1, 1)),
+        User(8, "Dave", "fff", "dave@tech.com", false, LocalDate.of(1993, 1, 1)),
+        User(9, "Eve", "ggg", "eve@security.com", true, LocalDate.of(1991, 1, 1)),
+        User(10, "Frank", "hhh", "frank@data.com", false, LocalDate.of(1989, 1, 1)),
+        User(11, "Grace", "iii", "grace@compute.com", true, LocalDate.of(1986, 1, 1)),
+        User(12, "Heidi", "jjj", "heidi@crypto.com", false, LocalDate.of(1994, 1, 1)),
+        User(13, "Ivan", "kkk", "ivan@risk.com", true, LocalDate.of(1982, 1, 1)),
+        User(14, "Judy", "lll", "judy@codes.com", false, LocalDate.of(1990, 1, 1)),
+        User(15, "Mallory", "mmm", "mallory@attack.com", true, LocalDate.of(1984, 1, 1))
     )
 
     val movies = listOf(

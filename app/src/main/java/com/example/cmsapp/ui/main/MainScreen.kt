@@ -1,5 +1,6 @@
 package com.example.cmsapp.ui.main
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,26 +48,47 @@ import com.example.cmsapp.ui.theme.CMSappTheme
 
 @Composable
 fun MainScreen(mainViewModel: MainViewModel = viewModel()){
+    Log.d("MAIN","MainScreen recompose triggered")
     val mainUiState by mainViewModel.mainUiState.collectAsState()
+    val userEntryState by mainViewModel.userEntryState.collectAsState()
     val isDisplayingUsers = mainUiState.isDisplayingUsers
     Scaffold(
         bottomBar = { CMSBottomAppBar(
             mainUiState,
-            mainViewModel::setIsDisplayingUsers,
-            {}
+            onClickAppbarIcon = mainViewModel::setIsDisplayingUsers,
+            onClickAppbarAddIcon = mainViewModel::setCurrentScreen
         ) },
     ) { innerPadding ->
-       LazyCardList(
-           isDisplayingUsers,
-           mainUiState.expandedCardId,
-           onClickCard = mainViewModel::toggleCardExpansion,
-           innerPadding = innerPadding
-       )
+        when(mainUiState.currentScreen) {
+            MainScreens.UserList, MainScreens.MovieList ->{
+                LazyCardList(
+                    isDisplayingUsers,
+                    mainUiState.expandedCardId,
+                    onClickCard = mainViewModel::toggleCardExpansion,
+                    innerPadding = innerPadding
+                )
+            }
+            MainScreens.AddUser, MainScreens.AddMovie -> {
+                AddUserScreen(
+                    onSubmit = {},
+                    //viewModel = mainViewModel,
+                    userEntryState = userEntryState,
+                    onUpdate = mainViewModel::updateUserEntryState
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun LazyCardList(isDisplayingUsers: Boolean, expandedCard : Int, onClickCard : (Int) -> Unit, users: List<User> = Datasource.users, movies: List<Movie> = Datasource.movies, innerPadding : PaddingValues){
+fun LazyCardList(
+    isDisplayingUsers: Boolean,
+    expandedCard: Int,
+    onClickCard: (Int) -> Unit,
+    users: List<User> = Datasource.users,
+    movies: List<Movie> = Datasource.movies,
+    innerPadding: PaddingValues,
+){
     LazyColumn(modifier = Modifier
         .padding(innerPadding)
         .fillMaxSize()) {
@@ -111,7 +134,7 @@ fun UserCard(user: User, isExpanded : Boolean = false, onClick : (Int) -> Unit, 
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = modifier
                 .fillMaxWidth()
-                .padding(6.dp,6.dp,6.dp,0.dp)
+                .padding(6.dp, 6.dp, 6.dp, 0.dp)
         ) {
             Row{
                 //use two rows to align the last icon to the right, suggested by chat.
@@ -123,7 +146,7 @@ fun UserCard(user: User, isExpanded : Boolean = false, onClick : (Int) -> Unit, 
                 }
                 Column {
                     Text(
-                        text = user.name,
+                        text = user.username,
                         style = MaterialTheme.typography.titleLarge,
                     )
                 }
@@ -142,7 +165,7 @@ fun UserCard(user: User, isExpanded : Boolean = false, onClick : (Int) -> Unit, 
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = modifier
                 .fillMaxWidth()
-                .padding(6.dp,0.dp,6.dp,6.dp)
+                .padding(6.dp, 0.dp, 6.dp, 6.dp)
         ){
             Column {
                 Text(
@@ -202,7 +225,7 @@ fun MovieCard(movie: Movie, isExpanded : Boolean = false, onClick : (Int) -> Uni
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = modifier
                 .fillMaxWidth()
-                .padding(6.dp,0.dp,6.dp,6.dp)
+                .padding(6.dp, 0.dp, 6.dp, 6.dp)
         ){
             Column {
                 Text(
@@ -222,12 +245,10 @@ fun MovieCard(movie: Movie, isExpanded : Boolean = false, onClick : (Int) -> Uni
 
 @Composable
 //onClickAppbarIcon refers to selecting videos or users. onClickAppbarAddIcon refers to the add icon.
-fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (Boolean) -> Unit, onClickAppbarAddIcon: () -> Unit){
+fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (Boolean) -> Unit, onClickAppbarAddIcon: (MainScreens) -> Unit){
     val isDisplayingUsers = mainUiState.isDisplayingUsers
-    BottomAppBar(containerColor = MaterialTheme.colorScheme.tertiary) {
-        val iconModifier = Modifier
-            .padding(10.dp)
-            .clip(RoundedCornerShape(10.dp))
+    BottomAppBar(containerColor = MaterialTheme.colorScheme.tertiary, modifier = Modifier.height(120.dp)) {
+        val iconModifier = Modifier.padding(0.dp).clip(RoundedCornerShape(10.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
@@ -254,7 +275,11 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (Boolean) -> U
                 )
             }
             FloatingActionButton(
-                onClick = { /* do something */ },
+                onClick = { onClickAppbarAddIcon(
+                    if(mainUiState.currentScreen == MainScreens.UserList)
+                        MainScreens.AddUser
+                    else MainScreens.AddMovie
+                ) },
                 containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                 elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
             ) {
