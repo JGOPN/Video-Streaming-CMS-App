@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +21,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -27,6 +30,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,7 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,35 +53,40 @@ import com.example.cmsapp.model.Movie
 import com.example.cmsapp.model.User
 import com.example.cmsapp.ui.theme.CMSappTheme
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(mainViewModel: MainViewModel = viewModel()){
     Log.d("MAIN","MainScreen recompose triggered")
     val mainUiState by mainViewModel.mainUiState.collectAsState()
-    val userEntryState by mainViewModel.userEntryState.collectAsState()
-    val isDisplayingUsers = mainUiState.isDisplayingUsers
+    //val userEntryState by mainViewModel.userEntryState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(text = mainUiState.currentScreen.title, textAlign = TextAlign.Center) },
+                scrollBehavior = scrollBehavior
+            )
+        },
         bottomBar = { CMSBottomAppBar(
             mainUiState,
-            onClickAppbarIcon = mainViewModel::setIsDisplayingUsers,
-            onClickAppbarAddIcon = mainViewModel::setCurrentScreen
+            onClickAppbarIcon = mainViewModel::setCurrentScreen,
         ) },
     ) { innerPadding ->
         when(mainUiState.currentScreen) {
             MainScreens.UserList, MainScreens.MovieList ->{
                 LazyCardList(
-                    isDisplayingUsers,
-                    mainUiState.expandedCardId,
+                    mainUiState,
                     onClickCard = mainViewModel::toggleCardExpansion,
                     innerPadding = innerPadding
                 )
             }
             MainScreens.AddUser, MainScreens.AddMovie -> {
                 AddUserScreen(
-                    onSubmit = {},
-                    //viewModel = mainViewModel,
+                    /*onSubmit = {},
+                    validateInputs = mainViewModel::validateUserEntry,
                     userEntryState = userEntryState,
-                    onUpdate = mainViewModel::updateUserEntryState
+                    onUpdate = mainViewModel::updateUserEntryState*/
                 )
             }
         }
@@ -82,8 +95,7 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()){
 
 @Composable
 fun LazyCardList(
-    isDisplayingUsers: Boolean,
-    expandedCard: Int,
+    mainUiState: MainUiState,
     onClickCard: (Int) -> Unit,
     users: List<User> = Datasource.users,
     movies: List<Movie> = Datasource.movies,
@@ -92,7 +104,7 @@ fun LazyCardList(
     LazyColumn(modifier = Modifier
         .padding(innerPadding)
         .fillMaxSize()) {
-        if(isDisplayingUsers){
+        if(mainUiState.currentScreen==MainScreens.UserList){
             items(
                 items = users,
                 key = {
@@ -101,7 +113,7 @@ fun LazyCardList(
             ) { item ->
                 UserCard(
                     user = item,
-                    isExpanded = expandedCard == item.id,
+                    isExpanded = mainUiState.expandedCardId == item.id,
                     onClick = {onClickCard(item.id)},
                     modifier = Modifier.padding(4.dp)
                 )
@@ -116,7 +128,7 @@ fun LazyCardList(
             ) { item ->
                 MovieCard(
                     movie = item,
-                    isExpanded = expandedCard == item.id,
+                    isExpanded = mainUiState.expandedCardId == item.id,
                     onClick = {onClickCard(item.id)},
                     modifier = Modifier.padding(4.dp)
                 )
@@ -245,9 +257,13 @@ fun MovieCard(movie: Movie, isExpanded : Boolean = false, onClick : (Int) -> Uni
 
 @Composable
 //onClickAppbarIcon refers to selecting videos or users. onClickAppbarAddIcon refers to the add icon.
-fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (Boolean) -> Unit, onClickAppbarAddIcon: (MainScreens) -> Unit){
-    val isDisplayingUsers = mainUiState.isDisplayingUsers
-    BottomAppBar(containerColor = MaterialTheme.colorScheme.tertiary, modifier = Modifier.height(120.dp)) {
+fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) -> Unit){
+    val currentScreen = mainUiState.currentScreen
+    BottomAppBar(
+        //containerColor = MaterialTheme.colorScheme.tertiary,
+        containerColor = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.height(120.dp)
+    ) {
         val iconModifier = Modifier.padding(0.dp).clip(RoundedCornerShape(10.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceAround,
@@ -255,27 +271,27 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (Boolean) -> U
             modifier = Modifier.fillMaxWidth(),
         ){
             IconButton(
-                onClick = {onClickAppbarIcon(false)},
-                modifier = if (isDisplayingUsers) iconModifier else iconModifier.background(MaterialTheme.colorScheme.secondary)
+                onClick = {onClickAppbarIcon(MainScreens.MovieList)},
+                modifier = iconModifier
             ) {
                 Icon(
                     painter = painterResource(R.drawable.movie),
                     contentDescription = "Manage movies",
-                    tint = if (isDisplayingUsers) Color.Unspecified else Color.Black
+                    tint = if (currentScreen==MainScreens.MovieList) Color.Black else Color.Unspecified
                 )
             }
             IconButton(
-                onClick = {onClickAppbarIcon(true)},
-                modifier = if (isDisplayingUsers) iconModifier.background(MaterialTheme.colorScheme.secondary) else iconModifier
+                onClick = {onClickAppbarIcon(MainScreens.UserList)},
+                modifier = iconModifier
             ) {
                 Icon(
                     painter = painterResource(R.drawable.manage_accounts),
                     contentDescription = "Manage users",
-                    tint = if (isDisplayingUsers) Color.Black else Color.Unspecified
+                    tint = if (currentScreen==MainScreens.UserList) Color.Black else Color.Unspecified
                 )
             }
             FloatingActionButton(
-                onClick = { onClickAppbarAddIcon(
+                onClick = { onClickAppbarIcon(
                     if(mainUiState.currentScreen == MainScreens.UserList)
                         MainScreens.AddUser
                     else MainScreens.AddMovie
@@ -283,7 +299,7 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (Boolean) -> U
                 containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                 elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
             ) {
-                Icon(Icons.Filled.Add, "Localized description")
+                Icon(Icons.Filled.Add, "Add a movie or user")
             }
         }
     }

@@ -1,0 +1,64 @@
+package com.example.cmsapp.ui.main
+
+import androidx.lifecycle.ViewModel
+import com.example.cmsapp.model.Movie
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import java.time.LocalDateTime
+
+data class MovieEntryState(
+    val movieEntry : Movie = Movie(
+        0,
+        "Um Pistoleiro Chamado Papaco",
+        "Classico.",
+        1981,
+        1,
+        120,
+        LocalDateTime.of(2023, 10, 20, 19, 30),
+        listOf("Action")
+    )
+)
+
+class MovieEntryViewModel() : ViewModel(){
+    private val _movieEntryState = MutableStateFlow(MovieEntryState())
+    val movieEntryState: StateFlow<MovieEntryState> = _movieEntryState.asStateFlow()
+
+    fun updateMovieEntryState(
+        movieEntry: Movie = _movieEntryState.value.movieEntry
+    ) {
+        _movieEntryState.update {
+            MovieEntryState(movieEntry)
+        }
+    }
+
+    fun validateUserEntry(movie: Movie): List<String> {
+        val errors = mutableListOf<String>()
+
+        if (movie.title.isBlank()) {
+            errors.add("Title must not be empty.")
+        }
+
+        if (movie.description.isBlank()) {
+            errors.add("Description must not be empty.")
+        } else if (movie.description.length > 500) {
+            errors.add("Description must not exceed 500 characters.")
+        }
+
+        val currentYear = LocalDateTime.now().year
+        if (movie.releaseYear < 1888 || movie.releaseYear > currentYear) { // First film released in 1888
+            errors.add("Release year must be between 1888 and $currentYear.")
+        }
+
+        if (movie.duration <= 0) {
+            errors.add("Duration must be a positive number.")
+        }
+
+        if (movie.genres.isEmpty()) {
+            errors.add("At least one genre must be specified.")
+        }
+
+        return errors
+    }
+}

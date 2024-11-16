@@ -1,6 +1,6 @@
 package com.example.cmsapp.model
 
-import java.util.Date
+import java.time.LocalDateTime
 
 data class Movie(
     val id : Int,
@@ -9,6 +9,6 @@ data class Movie(
     val releaseYear : Int,
     val submittedBy : Int,
     val duration : Int,
-    val lastWatched : Pair<Date,Int>,
+    val lastWatched : LocalDateTime,
     val genres : List<String>
     )
