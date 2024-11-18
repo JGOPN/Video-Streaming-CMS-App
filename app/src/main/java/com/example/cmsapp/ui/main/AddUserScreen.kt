@@ -9,13 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -27,12 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cmsapp.model.User
+import com.example.cmsapp.ui.components.MinimalDialog
 import com.example.cmsapp.ui.theme.CMSappTheme
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -41,33 +35,25 @@ import java.time.format.DateTimeParseException
 @Composable
 fun AddUserScreen(
     userEntryViewModel: UserEntryViewModel = viewModel()
-    /*onSubmit: (User) -> Unit,
-    validateInputs: () -> List<String>,
-    userEntryState: UserEntryState,
-    onUpdate : (User) -> Unit,*/
 ) {
     val userEntryState by userEntryViewModel.userEntryState.collectAsState()
     val userEntry = userEntryState.userEntry
     val birthdateStr = remember { mutableStateOf(userEntry.birthdate.toString()) } //birthdate string so we only parse to LocalDate at submit
-    val openAlertDialog = remember { mutableStateOf(false)}
 
     val validateInputs = userEntryViewModel::validateUserEntry
     val onUpdate = userEntryViewModel::updateUserEntryState
-    val onSubmit : (User) -> Unit = {}
+    val onSubmit : () -> Unit = {}
 
     //When user clicks submit, may open alertDialog if form not valid, otherwise triggers onSubmit()
-    when(openAlertDialog.value){
-        true -> {
-            val errorList = validateInputs()
-            if(errorList.isNotEmpty())
-                MinimalDialog(
-                    errorList = validateInputs(),
-                    onDismissRequest = {openAlertDialog.value = false}
-                )
-            else
-                onSubmit(userEntry)
-        }
-        else -> {}
+    if(userEntryState.isDialogOpen){
+        val errorList = validateInputs()
+        if(errorList.isNotEmpty())
+            MinimalDialog(
+                messageList = validateInputs(),
+                onDismissRequest = {userEntryViewModel.toggleConfirmationDialog()}
+            )
+        else
+            onSubmit()
     }
 
     Column(
@@ -105,10 +91,10 @@ fun AddUserScreen(
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
             value = birthdateStr.value,
-            //onValueChange = { onUpdate(userEntry.copy(birthdate = LocalDate.parse(it)))},
             onValueChange = { birthdateStr.value = it },
             label = { Text("Birthdate (YYYY-MM-DD)") },
             modifier = Modifier.fillMaxWidth(),
+            maxLines = 1,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -130,34 +116,11 @@ fun AddUserScreen(
                 } catch (ex : DateTimeParseException) {
                     Log.d("MainActivity","Birthdate Parse error")
                 }
-                openAlertDialog.value = true
+                userEntryViewModel.toggleConfirmationDialog()//show dialog if has errors, submit otherwise
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Submit")
-        }
-    }
-}
-
-@Composable
-fun MinimalDialog(errorList : List<String>, onDismissRequest: () -> Unit) {
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(10.dp)){
-                Text(text = "Validation Error", style = MaterialTheme.typography.titleMedium)
-                for (error in errorList){
-                    Text(
-                        text = error,
-                        modifier = Modifier,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
         }
     }
 }

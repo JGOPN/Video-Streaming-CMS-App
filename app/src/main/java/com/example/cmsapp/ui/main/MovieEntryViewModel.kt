@@ -11,14 +11,14 @@ import java.time.LocalDateTime
 data class MovieEntryState(
     val movieEntry : Movie = Movie(
         0,
-        "Um Pistoleiro Chamado Papaco",
-        "Classico.",
+        "",
+        "",
         1981,
         1,
         120,
-        LocalDateTime.of(2023, 10, 20, 19, 30),
         listOf("Action")
-    )
+    ),
+    val isDialogOpen : Boolean = false
 )
 
 class MovieEntryViewModel() : ViewModel(){
@@ -33,8 +33,16 @@ class MovieEntryViewModel() : ViewModel(){
         }
     }
 
-    fun validateUserEntry(movie: Movie): List<String> {
+    fun toggleConfirmationDialog() {
+        _movieEntryState.update {
+                currentState -> currentState.copy(isDialogOpen = !currentState.isDialogOpen)
+        }
+    }
+
+    fun validateMovieEntry(): List<String> {
+
         val errors = mutableListOf<String>()
+        val movie = _movieEntryState.value.movieEntry
 
         if (movie.title.isBlank()) {
             errors.add("Title must not be empty.")

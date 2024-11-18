@@ -9,6 +9,5 @@ data class Movie(
     val releaseYear : Int,
     val submittedBy : Int,
     val duration : Int,
-    val lastWatched : LocalDateTime,
     val genres : List<String>
     )

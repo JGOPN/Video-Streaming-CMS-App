@@ -37,6 +37,7 @@ import com.example.cmsapp.ui.theme.CMSappTheme
 @Composable
 fun AuthBaseScreen(onSubmitClick: () -> Unit, onSwitch: () -> Unit, modifier: Modifier, authViewModel : AuthViewModel = viewModel()){
     val authUiState by authViewModel.authUiState.collectAsState()
+
     Column(modifier = Modifier.padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {

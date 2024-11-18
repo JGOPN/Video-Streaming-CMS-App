@@ -1,12 +1,10 @@
 package com.example.cmsapp.ui.main
 
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,7 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -51,6 +48,7 @@ import com.example.cmsapp.R
 import com.example.cmsapp.data.Datasource
 import com.example.cmsapp.model.Movie
 import com.example.cmsapp.model.User
+import com.example.cmsapp.ui.components.ConfirmationDialog
 import com.example.cmsapp.ui.theme.CMSappTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,8 +56,8 @@ import com.example.cmsapp.ui.theme.CMSappTheme
 fun MainScreen(mainViewModel: MainViewModel = viewModel()){
     Log.d("MAIN","MainScreen recompose triggered")
     val mainUiState by mainViewModel.mainUiState.collectAsState()
-    //val userEntryState by mainViewModel.userEntryState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -76,31 +74,37 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()){
         when(mainUiState.currentScreen) {
             MainScreens.UserList, MainScreens.MovieList ->{
                 LazyCardList(
-                    mainUiState,
-                    onClickCard = mainViewModel::toggleCardExpansion,
+                    mainViewModel,
                     innerPadding = innerPadding
                 )
             }
-            MainScreens.AddUser, MainScreens.AddMovie -> {
-                AddUserScreen(
-                    /*onSubmit = {},
-                    validateInputs = mainViewModel::validateUserEntry,
-                    userEntryState = userEntryState,
-                    onUpdate = mainViewModel::updateUserEntryState*/
-                )
-            }
+            MainScreens.AddUser -> AddUserScreen()
+            MainScreens.AddMovie -> AddMovieScreen()
         }
     }
 }
 
 @Composable
 fun LazyCardList(
-    mainUiState: MainUiState,
-    onClickCard: (Int) -> Unit,
+    mainViewModel: MainViewModel,
     users: List<User> = Datasource.users,
     movies: List<Movie> = Datasource.movies,
     innerPadding: PaddingValues,
 ){
+    val mainUiState by mainViewModel.mainUiState.collectAsState()
+    val dialogState by mainViewModel.dialogState
+    val selectedUserId by mainViewModel.selectedUserId
+    val onClickCard: (Int) -> Unit = mainViewModel::toggleCardExpansion
+
+    ConfirmationDialog(
+        selectedItem =
+            if  (mainUiState.currentScreen==MainScreens.UserList) users.find { it.id == selectedUserId }?.username //gets username from list or null
+            else movies.find { it.id == selectedUserId }?.title,
+        isVisible = dialogState,
+        onDismissRequest = { mainViewModel.hideDialog() },
+        onAcceptRequest = { mainViewModel.confirmDelete (mainViewModel::deleteUser) }
+    )
+
     LazyColumn(modifier = Modifier
         .padding(innerPadding)
         .fillMaxSize()) {
@@ -114,7 +118,8 @@ fun LazyCardList(
                 UserCard(
                     user = item,
                     isExpanded = mainUiState.expandedCardId == item.id,
-                    onClick = {onClickCard(item.id)},
+                    onClickCard = {onClickCard(item.id)},
+                    onShowDialog = mainViewModel::showDialog,
                     modifier = Modifier.padding(4.dp)
                 )
             }
@@ -129,18 +134,27 @@ fun LazyCardList(
                 MovieCard(
                     movie = item,
                     isExpanded = mainUiState.expandedCardId == item.id,
-                    onClick = {onClickCard(item.id)},
+                    onClickCard = {onClickCard(item.id)},
+                    onShowDialog = mainViewModel::showDialog,
                     modifier = Modifier.padding(4.dp)
                 )
             }
         }
 
+
     }
 }
 
 @Composable
-fun UserCard(user: User, isExpanded : Boolean = false, onClick : (Int) -> Unit, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth(), onClick = {onClick(user.id)}) {
+fun UserCard(
+    user: User,
+    isExpanded: Boolean = false,
+    onClickCard: (Int) -> Unit,             // expand card
+    onShowDialog: (Int) -> Unit,            //on delete icon, show confirmation dialog
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier.fillMaxWidth(), onClick = {onClickCard(user.id)}) {
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -160,11 +174,12 @@ fun UserCard(user: User, isExpanded : Boolean = false, onClick : (Int) -> Unit, 
                     Text(
                         text = user.username,
                         style = MaterialTheme.typography.titleLarge,
+                        maxLines = 2
                     )
                 }
             }
             Column {
-                IconButton(onClick = {}) {
+                IconButton(onClick = {onShowDialog(user.id)}) {
                     Icon(
                         Icons.Filled.Delete,
                         contentDescription = "delete user"
@@ -184,11 +199,16 @@ fun UserCard(user: User, isExpanded : Boolean = false, onClick : (Int) -> Unit, 
                     text = if(user.isAdmin) "Admin" else "User",
                     style = MaterialTheme.typography.titleMedium,
                 )
+            }
+            Column {
                 Text(
-                    text = user.email,
+                    text = "E-mail: ${user.email}",
                     style = MaterialTheme.typography.bodyMedium,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 3,
+                    maxLines = 2,
+                )
+                Text(
+                    text = "Birthdate: ${user.birthdate}",
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
@@ -196,8 +216,14 @@ fun UserCard(user: User, isExpanded : Boolean = false, onClick : (Int) -> Unit, 
 }
 
 @Composable
-fun MovieCard(movie: Movie, isExpanded : Boolean = false, onClick : (Int) -> Unit, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth(), onClick = {onClick(movie.id)}) {
+fun MovieCard(
+    movie: Movie,
+    isExpanded: Boolean = false,
+    onClickCard: (Int) -> Unit,             // expand card
+    onShowDialog: (Int) -> Unit,            //on delete icon, show confirmation dialog
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier.fillMaxWidth(), onClick = {onClickCard(movie.id)}) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -224,10 +250,10 @@ fun MovieCard(movie: Movie, isExpanded : Boolean = false, onClick : (Int) -> Uni
                 }
             }
             Column {
-                IconButton(onClick = {}) {
+                IconButton(onClick = {onShowDialog(movie.id)}) {
                     Icon(
                         Icons.Filled.Delete,
-                        contentDescription = "delete user"
+                        contentDescription = "delete movie"
                     )
                 }
             }
@@ -239,16 +265,30 @@ fun MovieCard(movie: Movie, isExpanded : Boolean = false, onClick : (Int) -> Uni
                 .fillMaxWidth()
                 .padding(6.dp, 0.dp, 6.dp, 6.dp)
         ){
-            Column {
+            Column(Modifier.weight(2f)) {
                 Text(
-                    text = "${movie.releaseYear}",
+                    text = "Release year: ${movie.releaseYear}",
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = movie.description,
+                    text = "Duration: ${movie.duration} minutes",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = "Description: ${movie.description}",
                     style = MaterialTheme.typography.bodyMedium,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 3,
+                )
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "Genre(s): ${movie.genres}",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = "Submitted by: User (id=${movie.submittedBy})",
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
@@ -260,11 +300,12 @@ fun MovieCard(movie: Movie, isExpanded : Boolean = false, onClick : (Int) -> Uni
 fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) -> Unit){
     val currentScreen = mainUiState.currentScreen
     BottomAppBar(
-        //containerColor = MaterialTheme.colorScheme.tertiary,
         containerColor = MaterialTheme.colorScheme.primary,
         modifier = Modifier.height(120.dp)
     ) {
-        val iconModifier = Modifier.padding(0.dp).clip(RoundedCornerShape(10.dp))
+        val iconModifier = Modifier
+            .padding(0.dp)
+            .clip(RoundedCornerShape(10.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
@@ -309,6 +350,7 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) 
 @Composable
 fun MainPreview() {
     CMSappTheme{
-        MainScreen()
+        //MainScreen()
+        //MovieCard(Datasource.movies[5],true,{},{})
     }
 }

@@ -11,7 +11,8 @@ import java.time.LocalDate
 import java.time.Period
 
 data class UserEntryState(
-    val userEntry : User = User(0,"","","",false, LocalDate.of(2000,1,1))
+    val userEntry : User = User(0,"","","",false, LocalDate.of(2000,1,1)),
+    val isDialogOpen : Boolean = false
 )
 
 class UserEntryViewModel() : ViewModel() {
@@ -23,6 +24,12 @@ class UserEntryViewModel() : ViewModel() {
     ) {
         _userEntryState.update {
             UserEntryState(userEntry)
+        }
+    }
+
+    fun toggleConfirmationDialog() {
+        _userEntryState.update {
+                currentState -> currentState.copy(isDialogOpen = !currentState.isDialogOpen)
         }
     }
 

@@ -31,7 +31,7 @@ fun CMSNavGraph(navController: NavHostController,
         startDestination = CMSDestinations.Login.name,
         modifier = modifier
     ){
-        //consider login and register same destination, leave internal logic to viewmodel??
+        //consider login and register same destination, leave internal logic to viewmodel
         composable(route = CMSDestinations.Login.name) {
             AuthBaseScreen(
                 onSwitch = {
