@@ -49,7 +49,7 @@ fun AddUserScreen(
         val errorList = validateInputs()
         if(errorList.isNotEmpty())
             MinimalDialog(
-                messageList = validateInputs(),
+                messageList = errorList,
                 onDismissRequest = {userEntryViewModel.toggleConfirmationDialog()}
             )
         else

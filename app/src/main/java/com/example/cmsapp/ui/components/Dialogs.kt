@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.cmsapp.ui.theme.CMSappTheme
 
-@Composable
+@Composable //This dialog displays a list of strings, as in a list of form input errors
 fun MinimalDialog(messageList : List<String>, onDismissRequest: () -> Unit) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
@@ -48,6 +48,7 @@ fun MinimalDialog(messageList : List<String>, onDismissRequest: () -> Unit) {
 
 @Composable
 fun ConfirmationDialog(isVisible : Boolean = false, selectedItem: String?, onDismissRequest: () -> Unit, onAcceptRequest: () -> Unit) {
+    //this is used to confirm user or movie removal.
     if (isVisible) {
         Log.d("MainActivity","Dialog open. $selectedItem")
         Dialog(onDismissRequest = onDismissRequest) {

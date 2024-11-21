@@ -1,5 +1,6 @@
 package com.example.cmsapp.ui.auth
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -32,11 +32,25 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cmsapp.R
 import com.example.cmsapp.ui.AuthViewModel
+import com.example.cmsapp.ui.components.MinimalDialog
 import com.example.cmsapp.ui.theme.CMSappTheme
 
 @Composable
-fun AuthBaseScreen(onSubmitClick: () -> Unit, onSwitch: () -> Unit, modifier: Modifier, authViewModel : AuthViewModel = viewModel()){
+fun AuthBaseScreen(onSubmit: () -> Unit, modifier: Modifier, authViewModel : AuthViewModel = viewModel()){
     val authUiState by authViewModel.authUiState.collectAsState()
+
+    //When user clicks submit, may open alertDialog if form not valid, otherwise triggers onSubmit()
+    //For some reason this dialog doesnt center text??
+    if(authUiState.isDialogOpen){
+        val errorList = authViewModel.validateLoginInput()
+        if(errorList.isNotEmpty())
+            MinimalDialog(
+                messageList = errorList,
+                onDismissRequest = {authViewModel.toggleConfirmationDialog()}
+            )
+        else
+            onSubmit()
+    }
 
     Column(modifier = Modifier.padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -45,7 +59,7 @@ fun AuthBaseScreen(onSubmitClick: () -> Unit, onSwitch: () -> Unit, modifier: Mo
             contentDescription = "logo", contentScale = ContentScale.Fit, modifier = Modifier
                 .size(100.dp)
                 .padding(10.dp))
-        TextField(//TODO: the user can input (enter) which generates a newline
+        TextField(
             value = authUiState.username,
             onValueChange = {authViewModel.updateUiState(username = it)},
             label = { Text("Username") },
@@ -60,30 +74,18 @@ fun AuthBaseScreen(onSubmitClick: () -> Unit, onSwitch: () -> Unit, modifier: Mo
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        //change this?
-        if(!authUiState.isRegisterMode) //login
-            LoginScreen(onSubmitClick = onSubmitClick, onSwitch = {authViewModel.toggleUiState()},
-                modifier = modifier)
-        else
-            RegisterScreen(onSubmitClick = onSubmitClick, onSwitch = {authViewModel.toggleUiState()},
-                modifier = modifier)
+        LoginScreen(onSubmit = {
+            authViewModel.toggleConfirmationDialog() },
+            modifier = modifier)
     }
 }
 
 @Composable
-fun LoginScreen(onSubmitClick: () -> Unit, onSwitch: () -> Unit, isEnabled : Boolean = false, modifier: Modifier){
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            FilledTonalButton(
-                onClick = onSwitch,
-                modifier = Modifier.weight(1f),
-                contentPadding = ButtonDefaults.TextButtonContentPadding
-            ) {
-                Text("Register User", fontSize = 20.sp)
-            }
+fun LoginScreen(onSubmit: () -> Unit, modifier: Modifier){
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Button(
-                //enabled = isEnabled,
-                onClick = onSubmitClick,
-                modifier = Modifier.weight(1f),
+                onClick = onSubmit,
+                modifier = Modifier.fillMaxWidth(0.5f),
                 contentPadding = ButtonDefaults.TextButtonContentPadding
             ) {
                 Text("Log In", fontSize = 20.sp)
@@ -91,34 +93,14 @@ fun LoginScreen(onSubmitClick: () -> Unit, onSwitch: () -> Unit, isEnabled : Boo
         }
 }
 
-@Composable
-fun RegisterScreen(onSubmitClick: () -> Unit, onSwitch: () -> Unit, modifier: Modifier){
-    /*TODO: add email, yob*/
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            FilledTonalButton(
-                onClick = onSwitch,
-                modifier = Modifier.weight(1f),
-                contentPadding = ButtonDefaults.TextButtonContentPadding
-            ) {
-                Text("Log In", fontSize = 20.sp)
-            }
-            Button(
-                onClick = onSubmitClick,
-                modifier = Modifier.weight(1f),
-                contentPadding = ButtonDefaults.TextButtonContentPadding
-            ) {
-                Text("Register", fontSize = 20.sp)
-            }
-        }
-}
+
 
 @Preview(showBackground = true)
 @Composable
 fun LogInPreview() {
     CMSappTheme{
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            //LoginScreen({},{},Modifier.padding(innerPadding))
-            RegisterScreen({},{},Modifier.padding(innerPadding))
+            LoginScreen({}, Modifier.padding(innerPadding))
         }
     }
 }

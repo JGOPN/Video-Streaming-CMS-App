@@ -80,20 +80,21 @@ fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
                 value = movieEntry.releaseYear.toString(),
                 onValueChange = { onUpdate(movieEntry.copy(releaseYear = it.toIntOrNull() ?: 0 )) },//if parse error, sets to 0
                 label = { Text("Release Year") },
-                modifier = Modifier.weight(1f).padding(end = 8.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                modifier = Modifier.weight(1f).padding(end = 8.dp)
             )
             TextField(
                 value = movieEntry.duration.toString(),
                 onValueChange = { onUpdate(movieEntry.copy(duration = it.toIntOrNull() ?: 0)) },
                 label = { Text("Duration (minutes)") },
-                modifier = Modifier.weight(1f).padding(start = 8.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
         }
 
         GenreSelection(onSelectionChange = {onUpdate(movieEntry.copy(genres = it))})
-        //TODO: Genres
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = {
@@ -151,6 +152,6 @@ fun GenreSelection(genres: List<String> = Datasource.genres, onSelectionChange: 
 @Composable
 fun GenrePreview() {
     CMSappTheme{
-        GenreSelection(onSelectionChange = {})
+        AddMovieScreen()
     }
 }

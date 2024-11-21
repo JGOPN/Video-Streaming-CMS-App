@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import androidx.lifecycle.viewModelScope
+import com.example.cmsapp.model.Movie
+import com.example.cmsapp.network.CMSApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 enum class MainScreens(val title : String){
     UserList("Users"),
@@ -56,6 +61,21 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
         hideDialog()
     }
 
+    //private fun getMovies(){
+    fun getMovies(){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = CMSApi.retrofitService.getMovies()
+                Log.d("MainActivity", "Response: $result")
+                _mainUiState.update {
+                        currentState -> currentState.copy(movieList = result)
+                }
+            } catch (e: Exception) {
+                println("Network error: ${e.message}")
+            }
+        }
+    }
+
     fun deleteUser(id : Int){
         Log.d("MainActivity","deleting user $id")
     }
@@ -68,4 +88,5 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
 data class MainUiState(
     val currentScreen : MainScreens = MainScreens.UserList,
     val expandedCardId : Int = -1,  //id for the selected movie or user card
+    val movieList : String = "" //recieve the movie count for now....
 )

@@ -10,13 +10,13 @@ import java.time.LocalDateTime
 
 data class MovieEntryState(
     val movieEntry : Movie = Movie(
-        0,
-        "",
-        "",
-        1981,
-        1,
-        120,
-        listOf("Action")
+        id = 0,
+        title = "",
+        description = "",
+        releaseYear = 1990,
+        submittedBy = 0,
+        duration = 0,
+        genres = listOf()
     ),
     val isDialogOpen : Boolean = false
 )

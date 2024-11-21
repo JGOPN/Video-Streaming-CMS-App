@@ -25,6 +25,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -54,9 +55,12 @@ import com.example.cmsapp.ui.theme.CMSappTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(mainViewModel: MainViewModel = viewModel()){
-    Log.d("MAIN","MainScreen recompose triggered")
+
     val mainUiState by mainViewModel.mainUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+    Log.d("MAIN","MainScreen recompose triggered. Current screen: ${mainUiState.currentScreen}")
+
+    mainViewModel.getMovies()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -296,7 +300,7 @@ fun MovieCard(
 }
 
 @Composable
-//onClickAppbarIcon refers to selecting videos or users. onClickAppbarAddIcon refers to the add icon.
+//onClickAppbarIcon recieves a MainScreens and updates viewModel to go to that screen (doesnt use navigation)
 fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) -> Unit){
     val currentScreen = mainUiState.currentScreen
     BottomAppBar(
@@ -331,16 +335,29 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) 
                     tint = if (currentScreen==MainScreens.UserList) Color.Black else Color.Unspecified
                 )
             }
+
             FloatingActionButton(
-                onClick = { onClickAppbarIcon(
-                    if(mainUiState.currentScreen == MainScreens.UserList)
-                        MainScreens.AddUser
-                    else MainScreens.AddMovie
-                ) },
+                onClick = { onClickAppbarIcon(MainScreens.AddUser) },
                 containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                 elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
             ) {
-                Icon(Icons.Filled.Add, "Add a movie or user")
+                Column(horizontalAlignment = Alignment.CenterHorizontally){
+                    Icon(Icons.Filled.Add, "User", tint = if(currentScreen==MainScreens.AddUser) Color.Black else LocalContentColor.current)
+                    Text("User")
+                    /*color = if(mainUiState.currentScreen==MainScreens.AddUser) Color.Black else LocalContentColor.current
+                    * this doesnt work for some reason.*/
+                }
+            }
+
+            FloatingActionButton(
+                onClick = { onClickAppbarIcon(MainScreens.AddMovie) },
+                containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
+                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally){
+                    Icon(Icons.Filled.Add, "Add a movie", tint = if(currentScreen==MainScreens.AddMovie) Color.Black else LocalContentColor.current)
+                    Text("Movie")
+                }
             }
         }
     }
@@ -350,7 +367,7 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) 
 @Composable
 fun MainPreview() {
     CMSappTheme{
-        //MainScreen()
-        //MovieCard(Datasource.movies[5],true,{},{})
+        MainScreen()
+        //MovieCard(isExpanded = true,movie = Datasource.movies[9], onClickCard = {}, onShowDialog = {})
     }
 }
