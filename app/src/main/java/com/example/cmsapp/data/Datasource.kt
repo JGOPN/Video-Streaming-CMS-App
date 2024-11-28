@@ -2,27 +2,26 @@ package com.example.cmsapp.data
 
 import com.example.cmsapp.model.Movie
 import com.example.cmsapp.model.User
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.Date
+import kotlinx.datetime.LocalDate
+
 
 object Datasource {
     val users = listOf(
-        User(1, "Joao", "ffff", "jj@gmail.com", true, LocalDate.of(1985, 1, 1)),
-        User(2, "Jeswus", "aaa", "jc@heavn.com", false, LocalDate.of(1992, 1, 1)),
-        User(3, "Maria", "bbb", "maria@gmail.com", false, LocalDate.of(1990, 1, 1)),
-        User(4, "Napoleao", "aaaa", "napo@leao.fr", true, LocalDate.of(1980, 1, 1)),
-        User(5, "Alice", "ccc", "alice@wonderland.com", true, LocalDate.of(1988, 1, 1)),
-        User(6, "Bob", "ddd", "bob@builder.com", false, LocalDate.of(1995, 1, 1)),
-        User(7, "Carol", "eee", "carol@network.com", true, LocalDate.of(1987, 1, 1)),
-        User(8, "Dave", "fff", "dave@tech.com", false, LocalDate.of(1993, 1, 1)),
-        User(9, "Eve", "ggg", "eve@security.com", true, LocalDate.of(1991, 1, 1)),
-        User(10, "Frank", "hhh", "frank@data.com", false, LocalDate.of(1989, 1, 1)),
-        User(11, "Grace", "iii", "grace@compute.com", true, LocalDate.of(1986, 1, 1)),
-        User(12, "Heidi", "jjj", "heidi@crypto.com", false, LocalDate.of(1994, 1, 1)),
-        User(13, "Ivan", "kkk", "ivan@risk.com", true, LocalDate.of(1982, 1, 1)),
-        User(14, "Judy", "lll", "judy@codes.com", false, LocalDate.of(1990, 1, 1)),
-        User(15, "Mallory", "mmm", "mallory@attack.com", true, LocalDate.of(1984, 1, 1))
+        User(id = 1, username = "Joao", password = "ffff", email = "jj@gmail.com", isAdmin = true, birthdate = LocalDate(1985, 1, 1), salt = ""),
+        User(id = 2, username = "Jeswus", password = "aaa", email = "jc@heavn.com", isAdmin = false, birthdate = LocalDate(1992, 1, 1), salt = ""),
+        User(id = 3, username = "Maria", password = "bbb", email = "maria@gmail.com", isAdmin = false, birthdate = LocalDate(1990, 1, 1), salt = ""),
+        User(id = 4, username = "Napoleao", password = "aaaa", email = "napo@leao.fr", isAdmin = true, birthdate = LocalDate(1980, 1, 1), salt = ""),
+        User(id = 5, username = "Alice", password = "ccc", email = "alice@wonderland.com", isAdmin = true, birthdate = LocalDate(1988, 1, 1), salt = ""),
+        User(id = 6, username = "Bob", password = "ddd", email = "bob@builder.com", isAdmin = false, birthdate = LocalDate(1995, 1, 1), salt = ""),
+        User(id = 7, username = "Carol", password = "eee", email = "carol@network.com", isAdmin = true, birthdate = LocalDate(1987, 1, 1), salt = ""),
+        User(id = 8, username = "Dave", password = "fff", email = "dave@tech.com", isAdmin = false, birthdate = LocalDate(1993, 1, 1), salt = ""),
+        User(id = 9, username = "Eve", password = "ggg", email = "eve@security.com", isAdmin = true, birthdate = LocalDate(1991, 1, 1), salt = ""),
+        User(id = 10, username = "Frank", password = "hhh", email = "frank@data.com", isAdmin = false, birthdate = LocalDate(1989, 1, 1), salt = ""),
+        User(id = 11, username = "Grace", password = "iii", email = "grace@compute.com", isAdmin = true, birthdate = LocalDate(1986, 1, 1), salt = ""),
+        User(id = 12, username = "Heidi", password = "jjj", email = "heidi@crypto.com", isAdmin = false, birthdate = LocalDate(1994, 1, 1), salt = ""),
+        User(id = 13, username = "Ivan", password = "kkk", email = "ivan@risk.com", isAdmin = true, birthdate = LocalDate(1982, 1, 1), salt = ""),
+        User(id = 14, username = "Judy", password = "lll", email = "judy@codes.com", isAdmin = false, birthdate = LocalDate(1990, 1, 1), salt = ""),
+        User(id = 15, username = "Mallory", password = "mmm", email = "mallory@attack.com", isAdmin = true, birthdate = LocalDate(1984, 1, 1), salt = "")
     )
 
     val movies = listOf(

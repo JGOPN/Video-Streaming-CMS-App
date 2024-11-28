@@ -1,6 +1,7 @@
 package com.example.cmsapp.ui.main
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -46,7 +48,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cmsapp.R
-import com.example.cmsapp.data.Datasource
 import com.example.cmsapp.model.Movie
 import com.example.cmsapp.model.User
 import com.example.cmsapp.ui.components.ConfirmationDialog
@@ -58,9 +59,7 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()){
 
     val mainUiState by mainViewModel.mainUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-    Log.d("MAIN","MainScreen recompose triggered. Current screen: ${mainUiState.currentScreen}")
-
-    mainViewModel.getMovies()
+    Log.d("MainActivity","MainScreen recompose triggered. Current screen: ${mainUiState.currentScreen}")
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -75,11 +74,13 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()){
             onClickAppbarIcon = mainViewModel::setCurrentScreen,
         ) },
     ) { innerPadding ->
+
         when(mainUiState.currentScreen) {
             MainScreens.UserList, MainScreens.MovieList ->{
                 LazyCardList(
                     mainViewModel,
-                    innerPadding = innerPadding
+                    innerPadding = innerPadding,
+                    mainUiState
                 )
             }
             MainScreens.AddUser -> AddUserScreen()
@@ -91,28 +92,42 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()){
 @Composable
 fun LazyCardList(
     mainViewModel: MainViewModel,
-    users: List<User> = Datasource.users,
-    movies: List<Movie> = Datasource.movies,
     innerPadding: PaddingValues,
+    mainUiState: MainUiState
 ){
-    val mainUiState by mainViewModel.mainUiState.collectAsState()
     val dialogState by mainViewModel.dialogState
     val selectedUserId by mainViewModel.selectedUserId
     val onClickCard: (Int) -> Unit = mainViewModel::toggleCardExpansion
 
     ConfirmationDialog(
         selectedItem =
-            if  (mainUiState.currentScreen==MainScreens.UserList) users.find { it.id == selectedUserId }?.username //gets username from list or null
-            else movies.find { it.id == selectedUserId }?.title,
+            if  (mainUiState.currentScreen==MainScreens.UserList) mainUiState.userList.find { it.id == selectedUserId }?.username //gets username from list or null
+            else mainUiState.movieList.find { it.id == selectedUserId }?.title,
         isVisible = dialogState,
         onDismissRequest = { mainViewModel.hideDialog() },
         onAcceptRequest = { mainViewModel.confirmDelete (mainViewModel::deleteUser) }
     )
 
-    LazyColumn(modifier = Modifier
-        .padding(innerPadding)
-        .fillMaxSize()) {
+    when (mainUiState.currentScreen) {
+        //shows loading icon and triggers getList
+        MainScreens.UserList -> {
+            ShowLoadingAndFetchList(
+                isListEmpty = mainUiState.userList.isEmpty(),
+                fetchList = { mainViewModel.getUserList() }
+            )
+        }
+        MainScreens.MovieList -> {
+            ShowLoadingAndFetchList(
+                isListEmpty = mainUiState.movieList.isEmpty(),
+                fetchList = { mainViewModel.getMovieList() }
+            )
+        }
+        else -> {}
+    }
+
+    LazyColumn(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
         if(mainUiState.currentScreen==MainScreens.UserList){
+            val users = mainUiState.userList
             items(
                 items = users,
                 key = {
@@ -129,6 +144,7 @@ fun LazyCardList(
             }
         }
         else{
+            val movies = mainUiState.movieList
             items(
                 items = movies,
                 key = {
@@ -144,8 +160,6 @@ fun LazyCardList(
                 )
             }
         }
-
-
     }
 }
 
@@ -300,7 +314,7 @@ fun MovieCard(
 }
 
 @Composable
-//onClickAppbarIcon recieves a MainScreens and updates viewModel to go to that screen (doesnt use navigation)
+//onClickAppbarIcon receives a MainScreens and updates viewModel to go to that screen (doesnt use navigation)
 fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) -> Unit){
     val currentScreen = mainUiState.currentScreen
     BottomAppBar(
@@ -360,6 +374,16 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) 
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ShowLoadingAndFetchList(isListEmpty: Boolean, fetchList: () -> Unit) {
+    if (isListEmpty) {
+        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            Image(painter = painterResource(R.drawable.loading_img), contentDescription = "loading", modifier = Modifier.size(300.dp))
+        }
+        fetchList()
     }
 }
 

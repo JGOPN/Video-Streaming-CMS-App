@@ -1,13 +1,20 @@
 package com.example.cmsapp.model
 
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class User(
+    @SerialName("user_id")
     val id : Int,
     val username : String,
-    val password : String,
     val email : String,
-    val isAdmin : Boolean,
-    val birthdate: LocalDate
+    val birthdate: LocalDate,
+    @SerialName("password_hash")
+    val password : String,
+    val salt: String,
+    @SerialName("is_admin")
+    val isAdmin : Boolean
 )

@@ -22,6 +22,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,7 +57,7 @@ fun AuthBaseScreen(onSubmit: () -> Unit, modifier: Modifier, authViewModel : Aut
     Column(modifier = Modifier.padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(painter = painterResource(R.drawable.ic_launcher_foreground),
+        Image(painter = painterResource(R.drawable.logo), colorFilter = ColorFilter.tint(Color.White),
             contentDescription = "logo", contentScale = ContentScale.Fit, modifier = Modifier
                 .size(100.dp)
                 .padding(10.dp))

@@ -7,11 +7,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.time.LocalDate
-import java.time.Period
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.*
+
 
 data class UserEntryState(
-    val userEntry : User = User(0,"","","",false, LocalDate.of(2000,1,1)),
+    val userEntry : User = User(0,"","",LocalDate(2000,1,1),"","",false),
     val isDialogOpen : Boolean = false
 )
 
@@ -55,7 +56,8 @@ class UserEntryViewModel() : ViewModel() {
         if (!emailRegex.matches(userEntry.email))
             errorList.add("Email is not valid.")
 
-        val age = Period.between(userEntry.birthdate, LocalDate.now()).years
+        val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val age = userEntry.birthdate.yearsUntil(currentDate)
         if (age < 13) errorList.add("User must be at least 13 years old to create an account.")
         if (age > 120) errorList.add("Please input a valid age.")
 

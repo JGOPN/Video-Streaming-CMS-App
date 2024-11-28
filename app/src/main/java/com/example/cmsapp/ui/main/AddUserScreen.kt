@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cmsapp.ui.components.MinimalDialog
 import com.example.cmsapp.ui.theme.CMSappTheme
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.DateTimeArithmeticException
 
 
 @Composable
@@ -113,7 +113,7 @@ fun AddUserScreen(
             onClick = {
                 try {
                     onUpdate(userEntry.copy(birthdate = LocalDate.parse(birthdateStr.value))) //handle parseError on LocalDate
-                } catch (ex : DateTimeParseException) {
+                } catch (ex : Exception) {
                     Log.d("MainActivity","Birthdate Parse error")
                 }
                 userEntryViewModel.toggleConfirmationDialog()//show dialog if has errors, submit otherwise

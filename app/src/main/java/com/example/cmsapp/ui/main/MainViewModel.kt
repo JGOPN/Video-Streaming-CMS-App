@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import androidx.lifecycle.viewModelScope
 import com.example.cmsapp.model.Movie
+import com.example.cmsapp.model.User
 import com.example.cmsapp.network.CMSApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 
 enum class MainScreens(val title : String){
     UserList("Users"),
@@ -61,17 +64,30 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
         hideDialog()
     }
 
-    //private fun getMovies(){
-    fun getMovies(){
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val result = CMSApi.retrofitService.getMovies()
-                Log.d("MainActivity", "Response: $result")
-                _mainUiState.update {
-                        currentState -> currentState.copy(movieList = result)
+    fun getMovieList() {
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) { CMSApi.retrofitService.getMovies() }
+            }.onSuccess { movieList ->
+                _mainUiState.update { currentState ->
+                    currentState.copy(movieList = movieList)
                 }
-            } catch (e: Exception) {
-                println("Network error: ${e.message}")
+            }.onFailure { exception ->
+                Log.e("MainActivity", "Error: ${exception.message}", exception)
+            }
+        }
+    }
+
+    fun getUserList() {
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) { CMSApi.retrofitService.getUsers() }
+            }.onSuccess { userList ->
+                _mainUiState.update { currentState ->
+                    currentState.copy(userList = userList)
+                }
+            }.onFailure { exception ->
+                Log.e("MainActivity", "Error: ${exception.message}", exception)
             }
         }
     }
@@ -88,5 +104,6 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
 data class MainUiState(
     val currentScreen : MainScreens = MainScreens.UserList,
     val expandedCardId : Int = -1,  //id for the selected movie or user card
-    val movieList : String = "" //recieve the movie count for now....
+    val userList : List<User> = listOf(),
+    val movieList : List<Movie> = listOf(), //receive the movie count for now....
 )
