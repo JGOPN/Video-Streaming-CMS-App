@@ -1,11 +1,17 @@
 package com.example.cmsapp.ui.main
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.cmsapp.model.Movie
+import com.example.cmsapp.network.CMSApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 data class MovieEntryState(
@@ -14,10 +20,11 @@ data class MovieEntryState(
         title = "",
         description = "",
         releaseYear = 1990,
-        submittedBy = 0,
+        submittedBy = 1,
         duration = 0,
         genres = listOf()
     ),
+    val movieUrl: String = "",
     val isDialogOpen : Boolean = false
 )
 
@@ -32,6 +39,13 @@ class MovieEntryViewModel() : ViewModel(){
             MovieEntryState(movieEntry)
         }
     }
+
+    fun updateMovieURL(url : String){
+        _movieEntryState.update {
+            currentState -> currentState.copy(movieUrl = url)
+        }
+    }
+
 
     fun toggleConfirmationDialog() {
         _movieEntryState.update {
@@ -67,6 +81,32 @@ class MovieEntryViewModel() : ViewModel(){
             errors.add("At least one genre must be specified.")
         }
 
+        if(_movieEntryState.value.movieUrl.isBlank()){
+            errors.add("Select a local video or input a URL.")
+        }
+
         return errors
+    }
+
+    fun addMovie(onResult: (Boolean) -> Unit){
+        val movieEntry = _movieEntryState.value.movieEntry
+        Log.d("MainActivity","adding movie ${movieEntry.title}")
+
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) { CMSApi.retrofitService.addMovie(movieEntry) }
+            }.onSuccess { response ->
+                if (response.isSuccessful) {
+                    Log.d("MainActivity", "Movie added successfully")
+                    onResult(true)
+                } else {
+                    Log.e("MainActivity", "Failed to add movie: ${response.code()} ${response.message()}")
+                    onResult(false)
+                }
+            }.onFailure { exception ->
+                handleExceptions(exception)
+                onResult(false)
+            }
+        }
     }
 }

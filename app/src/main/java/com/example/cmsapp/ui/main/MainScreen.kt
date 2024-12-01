@@ -101,15 +101,17 @@ fun LazyCardList(
 
     ConfirmationDialog(
         selectedItem =
-            if  (mainUiState.currentScreen==MainScreens.UserList) mainUiState.userList.find { it.id == selectedUserId }?.username //gets username from list or null
+            if  (mainUiState.currentScreen==MainScreens.UserList) mainUiState.userList.find { it.id == selectedUserId }?.username //gets username/movietitle from list or null
             else mainUiState.movieList.find { it.id == selectedUserId }?.title,
         isVisible = dialogState,
         onDismissRequest = { mainViewModel.hideDialog() },
-        onAcceptRequest = { mainViewModel.confirmDelete (mainViewModel::deleteUser) }
+        onAcceptRequest = {  if(mainUiState.currentScreen==MainScreens.UserList) mainViewModel.confirmDelete(mainViewModel::deleteUser)
+                            else mainViewModel.confirmDelete (mainViewModel::deleteMovie) }
     )
 
     when (mainUiState.currentScreen) {
         //shows loading icon and triggers getList
+        //TODO This is bad. If getUserList fails, userList will be empty -> loops
         MainScreens.UserList -> {
             ShowLoadingAndFetchList(
                 isListEmpty = mainUiState.userList.isEmpty(),

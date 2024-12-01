@@ -31,7 +31,7 @@ fun CMSNavGraph(navController: NavHostController,
         //consider login and register same destination, leave internal logic to viewmodel
         composable(route = CMSDestinations.Login.name) {
             AuthBaseScreen(
-                onSubmit = { navController.navigate(CMSDestinations.Main.name) },
+                onLogin = { navController.navigate(CMSDestinations.Main.name) },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)

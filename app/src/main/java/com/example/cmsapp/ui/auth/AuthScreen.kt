@@ -38,7 +38,7 @@ import com.example.cmsapp.ui.components.MinimalDialog
 import com.example.cmsapp.ui.theme.CMSappTheme
 
 @Composable
-fun AuthBaseScreen(onSubmit: () -> Unit, modifier: Modifier, authViewModel : AuthViewModel = viewModel()){
+fun AuthBaseScreen(onLogin: () -> Unit, modifier: Modifier, authViewModel : AuthViewModel = viewModel()){
     val authUiState by authViewModel.authUiState.collectAsState()
 
     //When user clicks submit, may open alertDialog if form not valid, otherwise triggers onSubmit()
@@ -51,7 +51,7 @@ fun AuthBaseScreen(onSubmit: () -> Unit, modifier: Modifier, authViewModel : Aut
                 onDismissRequest = {authViewModel.toggleConfirmationDialog()}
             )
         else
-            onSubmit()
+            onLogin()
     }
 
     Column(modifier = Modifier.padding(24.dp),

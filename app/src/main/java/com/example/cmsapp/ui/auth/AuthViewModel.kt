@@ -1,13 +1,21 @@
 package com.example.cmsapp.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.cmsapp.network.CMSApi
+import com.example.cmsapp.ui.main.handleExceptions
+import com.example.cmsapp.ui.main.hashPassword
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
-class AuthViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewModel() {
+class AuthViewModel() : ViewModel() {
 
     private val _authUiState = MutableStateFlow(AuthUiState())
     val authUiState: StateFlow<AuthUiState> = _authUiState.asStateFlow()
@@ -37,6 +45,13 @@ class AuthViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
         if (_authUiState.value.password.isBlank()) errorList.add("Password cannot be blank")
 
         return errorList
+    }
+
+    fun authenticate(onResult: (Boolean) -> Unit){
+    }
+
+    fun logIn(){
+
     }
 
 }

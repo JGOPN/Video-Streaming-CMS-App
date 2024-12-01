@@ -6,9 +6,14 @@ import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Path
 
-private val BASE_URL =
+private const val BASE_URL =
         "http://192.168.1.72:8080" //local machine ip
 
 private val retrofit = Retrofit.Builder()
@@ -22,8 +27,20 @@ interface ApiService {
     @GET("movies")
     suspend fun getMovies(): List<Movie>
 
+    @DELETE("movies/{id}")
+    suspend fun deleteMovie(@Path("id") movieId: Int): Response<Unit>
+
+    @POST("movies")
+    suspend fun addMovie(@Body movie: Movie): Response<Unit>
+
     @GET("users")
     suspend fun getUsers(): List<User>
+
+    @DELETE("users/{id}")
+    suspend fun deleteUser(@Path("id") userId: Int): Response<Unit>
+
+    @POST("users")
+    suspend fun addUser(@Body user: User): Response<Unit>
 }
 
 // A public Api object that exposes the lazy-initialized Retrofit service

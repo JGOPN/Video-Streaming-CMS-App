@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells.*
+import androidx.compose.foundation.lazy.grid.GridCells.Fixed
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,22 +25,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cmsapp.ui.components.MinimalDialog
 import com.example.cmsapp.data.Datasource
+import com.example.cmsapp.ui.components.MinimalDialog
+import com.example.cmsapp.ui.components.VideoPicker
 import com.example.cmsapp.ui.theme.CMSappTheme
 
 @Composable
 fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
     val movieEntryState: MovieEntryState by movieEntryViewModel.movieEntryState.collectAsState()
     val movieEntry = movieEntryState.movieEntry
+    val addSuccessful = remember {  mutableStateOf<Boolean?>(null) } //if true, shows user added confirmation.
 
     val validateInputs = movieEntryViewModel::validateMovieEntry
     val onUpdate = movieEntryViewModel::updateMovieEntryState
-    val onSubmit: () -> Unit = {}
+    val onSubmit: ((Boolean) -> Unit) -> Unit = movieEntryViewModel::addMovie
 
     if(movieEntryState.isDialogOpen){
         val errorList = validateInputs()
@@ -49,8 +53,12 @@ fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
                 messageList = validateInputs(),
                 onDismissRequest = {movieEntryViewModel.toggleConfirmationDialog()}
             )
-        else
-            onSubmit()
+        else{
+            movieEntryViewModel.toggleConfirmationDialog()
+            onSubmit() { isSuccess ->
+                addSuccessful.value = isSuccess
+            }
+        }
     }
 
     Column(
@@ -95,6 +103,20 @@ fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
         }
 
         GenreSelection(onSelectionChange = {onUpdate(movieEntry.copy(genres = it))})
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            VideoPicker(onMovieSelect = movieEntryViewModel::updateMovieURL)
+            Text(text = "OR",textAlign = TextAlign.Center)
+            TextField(
+                value = movieEntryState.movieUrl,
+                onValueChange = {  movieEntryViewModel.updateMovieURL(url = it) },
+                label = { Text(text="Enter Movie URL") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             onClick = {
@@ -103,6 +125,13 @@ fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Submit")
+        }
+        Row(Modifier.fillMaxWidth().padding(3.dp), horizontalArrangement = Arrangement.Center){
+            when (addSuccessful.value) {
+                true -> Text(text = "Movie added successfully", textAlign = TextAlign.Center, color = Color.Green)
+                false -> Text(text = "Error adding movie", textAlign = TextAlign.Center, color = Color.Red)
+                null -> {}
+            }
         }
     }
 }

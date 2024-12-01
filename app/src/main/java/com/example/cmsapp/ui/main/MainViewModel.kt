@@ -15,6 +15,8 @@ import com.example.cmsapp.network.CMSApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
+import java.io.IOException
 
 
 enum class MainScreens(val title : String){
@@ -23,6 +25,14 @@ enum class MainScreens(val title : String){
     AddUser("Add new user"),
     AddMovie("Add new movie")
 }
+
+data class MainUiState(
+    val currentScreen : MainScreens = MainScreens.UserList,
+    val expandedCardId : Int = -1,  //id for the selected movie or user card
+    val userList : List<User> = listOf(),
+    val movieList : List<Movie> = listOf(), //receive the movie count for now....
+)
+
 
 class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewModel() {
 
@@ -58,8 +68,8 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
     }
 
     fun confirmDelete(onDelete: (Int) -> Unit) {
-        _selectedId.value?.let { userId ->
-            onDelete(userId)
+        _selectedId.value?.let { id ->
+            onDelete(id)
         }
         hideDialog()
     }
@@ -73,7 +83,7 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
                     currentState.copy(movieList = movieList)
                 }
             }.onFailure { exception ->
-                Log.e("MainActivity", "Error: ${exception.message}", exception)
+                handleExceptions(exception)
             }
         }
     }
@@ -87,23 +97,60 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
                     currentState.copy(userList = userList)
                 }
             }.onFailure { exception ->
-                Log.e("MainActivity", "Error: ${exception.message}", exception)
+                handleExceptions(exception)
             }
         }
     }
 
     fun deleteUser(id : Int){
         Log.d("MainActivity","deleting user $id")
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) { CMSApi.retrofitService.deleteUser(id) }
+            }.onSuccess { response ->
+                if (response.isSuccessful) {
+                    _mainUiState.update { currentState ->
+                        currentState.copy(
+                            userList = currentState.userList.filter { it.id != id }
+                        )
+                    }
+                    Log.d("MainActivity", "User deleted successfully")
+                } else {
+                    Log.e("MainActivity", "Failed to delete user: ${response.code()} ${response.message()}")
+                }
+            }.onFailure { exception ->
+                handleExceptions(exception)
+            }
+        }
     }
 
-    fun deleteVideo(id : Int){
+    fun deleteMovie(id : Int){
         Log.d("MainActivity","deleting video $id")
+        viewModelScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) { CMSApi.retrofitService.deleteMovie(id) }
+            }.onSuccess { response ->
+                if (response.isSuccessful) {
+                    _mainUiState.update { currentState ->
+                        currentState.copy(
+                            movieList = currentState.movieList.filter { it.id != id }
+                        )
+                    }
+                    Log.d("MainActivity", "Movie deleted successfully")
+                } else {
+                    Log.e("MainActivity", "Failed to delete movie: ${response.code()} ${response.message()}")
+                }
+            }.onFailure { exception ->
+                handleExceptions(exception)
+            }
+        }
     }
 }
 
-data class MainUiState(
-    val currentScreen : MainScreens = MainScreens.UserList,
-    val expandedCardId : Int = -1,  //id for the selected movie or user card
-    val userList : List<User> = listOf(),
-    val movieList : List<Movie> = listOf(), //receive the movie count for now....
-)
+fun handleExceptions(exception: Throwable){
+    when (exception) {
+        is IOException -> Log.e("Network", "Network error: ${exception.message}")
+        is HttpException -> Log.e("Network", "HTTP error: ${exception.message}")
+        else -> Log.e("Network", "Unexpected error: ${exception.message}")
+    }
+}

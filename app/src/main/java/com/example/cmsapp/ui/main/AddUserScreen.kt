@@ -21,16 +21,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cmsapp.ui.components.MinimalDialog
 import com.example.cmsapp.ui.theme.CMSappTheme
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.DateTimeArithmeticException
-
 
 @Composable
 fun AddUserScreen(
@@ -39,10 +39,11 @@ fun AddUserScreen(
     val userEntryState by userEntryViewModel.userEntryState.collectAsState()
     val userEntry = userEntryState.userEntry
     val birthdateStr = remember { mutableStateOf(userEntry.birthdate.toString()) } //birthdate string so we only parse to LocalDate at submit
+    val addSuccessful = remember {  mutableStateOf<Boolean?>(null) } //if true, shows user added confirmation.
 
     val validateInputs = userEntryViewModel::validateUserEntry
     val onUpdate = userEntryViewModel::updateUserEntryState
-    val onSubmit : () -> Unit = {}
+    val onSubmit: ((Boolean) -> Unit) -> Unit = userEntryViewModel::addUser
 
     //When user clicks submit, may open alertDialog if form not valid, otherwise triggers onSubmit()
     if(userEntryState.isDialogOpen){
@@ -53,7 +54,12 @@ fun AddUserScreen(
                 onDismissRequest = {userEntryViewModel.toggleConfirmationDialog()}
             )
         else
-            onSubmit()
+        {
+            userEntryViewModel.toggleConfirmationDialog()
+            onSubmit() { isSuccess ->
+                addSuccessful.value = isSuccess
+            }
+        }
     }
 
     Column(
@@ -81,8 +87,8 @@ fun AddUserScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
-            value = userEntry.password,
-            onValueChange = { onUpdate(userEntry.copy(password = it)) },
+            value = userEntryState.plainPassword,
+            onValueChange = { userEntryViewModel.updatePlainPassword(it) },
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
@@ -121,6 +127,14 @@ fun AddUserScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Submit")
+        }
+
+        Row(Modifier.fillMaxWidth().padding(3.dp), horizontalArrangement = Arrangement.Center){
+            when (addSuccessful.value) {
+                true -> Text(text = "User added successfully", textAlign = TextAlign.Center, color = Color.Green)
+                false -> Text(text = "Error adding user", textAlign = TextAlign.Center, color = Color.Red)
+                null -> {}
+            }
         }
     }
 }
