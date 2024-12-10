@@ -6,11 +6,16 @@ import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.ResponseBody
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 private const val BASE_URL =
@@ -33,6 +38,10 @@ interface ApiService {
     @POST("movies")
     suspend fun addMovie(@Body movie: Movie): Response<Unit>
 
+    @Multipart
+    @POST("movies/upload")
+    fun uploadMovie(@Part movie: MultipartBody.Part): Call<ResponseBody>
+
     @GET("users")
     suspend fun getUsers(): List<User>
 
@@ -41,6 +50,10 @@ interface ApiService {
 
     @POST("users")
     suspend fun addUser(@Body user: User): Response<Unit>
+
+    @GET("genres")
+    suspend fun getGenres(): List<String>
+
 }
 
 // A public Api object that exposes the lazy-initialized Retrofit service

@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Card
@@ -36,6 +37,8 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,11 +58,14 @@ import com.example.cmsapp.ui.theme.CMSappTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(mainViewModel: MainViewModel = viewModel()){
-
+fun MainScreen(mainViewModel: MainViewModel = viewModel()) {
     val mainUiState by mainViewModel.mainUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+    val triedFetchingUsers = remember {  mutableStateOf(false) } //if true, tried to fetch users
+
     Log.d("MainActivity","MainScreen recompose triggered. Current screen: ${mainUiState.currentScreen}")
+    Log.d("MainActivity","tried fetching users: ${triedFetchingUsers.value}")
+
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -69,25 +75,49 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()){
                 scrollBehavior = scrollBehavior
             )
         },
-        bottomBar = { CMSBottomAppBar(
-            mainUiState,
-            onClickAppbarIcon = mainViewModel::setCurrentScreen,
-        ) },
+        bottomBar = {
+            CMSBottomAppBar(
+                mainUiState,
+                onClickAppbarIcon = mainViewModel::setCurrentScreen,
+            )
+        },
     ) { innerPadding ->
 
-        when(mainUiState.currentScreen) {
-            MainScreens.UserList, MainScreens.MovieList ->{
-                LazyCardList(
-                    mainViewModel,
-                    innerPadding = innerPadding,
-                    mainUiState
-                )
+            if (mainUiState.currentScreen == MainScreens.UserList && mainUiState.userList.isEmpty() && !triedFetchingUsers.value) {
+                println("calling getUserList")
+                mainViewModel.getUserList()
+                triedFetchingUsers.value = true
             }
+
+            if (mainUiState.currentScreen == MainScreens.MovieList) {
+                mainViewModel.getMovieList()
+            }
+
+        when (mainUiState.currentScreen) {
+            MainScreens.UserList -> {
+                if (mainUiState.userList.isEmpty()) {
+                    println("Showing error")
+                    ShowError()
+                } else {
+                    println("Showing list")
+                    LazyCardList(mainViewModel, innerPadding, mainUiState)
+                }
+            }
+
+            MainScreens.MovieList -> {
+                if (mainUiState.movieList.isEmpty()) {
+                    ShowError()
+                } else {
+                    LazyCardList(mainViewModel, innerPadding, mainUiState)
+                }
+            }
+
             MainScreens.AddUser -> AddUserScreen()
             MainScreens.AddMovie -> AddMovieScreen()
         }
     }
 }
+
 
 @Composable
 fun LazyCardList(
@@ -99,7 +129,8 @@ fun LazyCardList(
     val selectedUserId by mainViewModel.selectedUserId
     val onClickCard: (Int) -> Unit = mainViewModel::toggleCardExpansion
 
-    ConfirmationDialog(
+
+    ConfirmationDialog(//confirmation dialog for deleting users/movies. Opens when isVisible=true.
         selectedItem =
             if  (mainUiState.currentScreen==MainScreens.UserList) mainUiState.userList.find { it.id == selectedUserId }?.username //gets username/movietitle from list or null
             else mainUiState.movieList.find { it.id == selectedUserId }?.title,
@@ -109,25 +140,9 @@ fun LazyCardList(
                             else mainViewModel.confirmDelete (mainViewModel::deleteMovie) }
     )
 
-    when (mainUiState.currentScreen) {
-        //shows loading icon and triggers getList
-        //TODO This is bad. If getUserList fails, userList will be empty -> loops
-        MainScreens.UserList -> {
-            ShowLoadingAndFetchList(
-                isListEmpty = mainUiState.userList.isEmpty(),
-                fetchList = { mainViewModel.getUserList() }
-            )
-        }
-        MainScreens.MovieList -> {
-            ShowLoadingAndFetchList(
-                isListEmpty = mainUiState.movieList.isEmpty(),
-                fetchList = { mainViewModel.getMovieList() }
-            )
-        }
-        else -> {}
-    }
-
-    LazyColumn(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+    LazyColumn(modifier = Modifier
+        .padding(innerPadding)
+        .fillMaxSize()) {
         if(mainUiState.currentScreen==MainScreens.UserList){
             val users = mainUiState.userList
             items(
@@ -380,12 +395,21 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) 
 }
 
 @Composable
-fun ShowLoadingAndFetchList(isListEmpty: Boolean, fetchList: () -> Unit) {
-    if (isListEmpty) {
+fun ShowLoading() {
         Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             Image(painter = painterResource(R.drawable.loading_img), contentDescription = "loading", modifier = Modifier.size(300.dp))
         }
-        fetchList()
+}
+
+@Composable
+fun ShowError(str: String = "movies") {
+    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
+        Icon(
+            Icons.Rounded.Warning,
+            contentDescription = "warning",
+            tint = Color.Red
+        )
+        Text(text = "Failed to fetch $str. Server is offline or you're not connected to the internet", textAlign = TextAlign.Center)
     }
 }
 

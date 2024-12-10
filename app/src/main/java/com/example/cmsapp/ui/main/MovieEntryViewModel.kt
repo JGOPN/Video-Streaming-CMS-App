@@ -1,5 +1,9 @@
 package com.example.cmsapp.ui.main
 
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
+import android.provider.MediaStore
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +16,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.ResponseBody
+import java.io.InputStream
 import java.time.LocalDateTime
 
 data class MovieEntryState(
@@ -22,10 +31,14 @@ data class MovieEntryState(
         releaseYear = 1990,
         submittedBy = 1,
         duration = 0,
-        genres = listOf()
+        genres = listOf(),
+        movieUrl = null, //this is only not null if user is sending url instead of file
     ),
-    val movieUrl: String = "",
-    val isDialogOpen : Boolean = false
+    val movieUrl: String = "", //textfield to send a url to a movie instead of sending a local file
+    val fileUri: Uri = Uri.EMPTY,
+    val isDialogOpen : Boolean = false,
+    val urlFieldEnabled: Boolean = true,
+    val allGenres: List<String> = listOf()
 )
 
 class MovieEntryViewModel() : ViewModel(){
@@ -35,8 +48,8 @@ class MovieEntryViewModel() : ViewModel(){
     fun updateMovieEntryState(
         movieEntry: Movie = _movieEntryState.value.movieEntry
     ) {
-        _movieEntryState.update {
-            MovieEntryState(movieEntry)
+        _movieEntryState.update { currentState ->
+            currentState.copy(movieEntry = movieEntry)
         }
     }
 
@@ -46,10 +59,21 @@ class MovieEntryViewModel() : ViewModel(){
         }
     }
 
+    fun updateMovieUri(uri : Uri){
+        _movieEntryState.update {
+                currentState -> currentState.copy(fileUri = uri)
+        }
+    }
 
     fun toggleConfirmationDialog() {
         _movieEntryState.update {
                 currentState -> currentState.copy(isDialogOpen = !currentState.isDialogOpen)
+        }
+    }
+
+    fun toggleUrlField(enabled: Boolean = true) {
+        _movieEntryState.update {
+                currentState -> currentState.copy(urlFieldEnabled = enabled)
         }
     }
 
@@ -77,13 +101,17 @@ class MovieEntryViewModel() : ViewModel(){
             errors.add("Duration must be a positive number.")
         }
 
+        if (movie.duration >= 300) {
+            errors.add("Duration must be lower than 5 hours.")
+        }
+
         if (movie.genres.isEmpty()) {
             errors.add("At least one genre must be specified.")
         }
 
-        if(_movieEntryState.value.movieUrl.isBlank()){
+/*        if(_movieEntryState.value.movieUrl.isBlank()){
             errors.add("Select a local video or input a URL.")
-        }
+        }*/
 
         return errors
     }
@@ -98,6 +126,9 @@ class MovieEntryViewModel() : ViewModel(){
             }.onSuccess { response ->
                 if (response.isSuccessful) {
                     Log.d("MainActivity", "Movie added successfully")
+                    /*if(!_movieEntryState.value.urlFieldEnabled){//user selected a local file to upload
+                        uploadVideo(_movieEntryState.value.filePath)
+                    }*/
                     onResult(true)
                 } else {
                     Log.e("MainActivity", "Failed to add movie: ${response.code()} ${response.message()}")
@@ -109,4 +140,62 @@ class MovieEntryViewModel() : ViewModel(){
             }
         }
     }
+
+    fun getFilePathFromUri(context: Context, uri: Uri): String? {
+        var path: String? = null
+        val projection = arrayOf(MediaStore.Video.Media.DATA)
+        val cursor: Cursor? = context.contentResolver.query(uri, projection, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                path = it.getString(it.getColumnIndexOrThrow(MediaStore.Video.Media.DATA))
+            }
+        }
+        return path
+    }
+
+
+    private fun getInputStreamFromUri(context: Context, uri: Uri): InputStream? {
+        return try {
+            context.contentResolver.openInputStream(uri)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun uploadMovieFromStream(context: Context) {
+        Log.d("MainActivity", "uploadMovieFromStream called!")
+        val inputStream = getInputStreamFromUri(context, _movieEntryState.value.fileUri) ?: return
+
+        val requestBody = object : RequestBody() {
+            override fun contentType() = "video/mp4".toMediaTypeOrNull()
+
+            override fun writeTo(sink: okio.BufferedSink) {
+                // Do not use `inputStream.use` here to prevent premature closing
+                inputStream.copyTo(sink.outputStream())
+            }
+        }
+
+        val multipartBody = MultipartBody.Part.createFormData("movie", _movieEntryState.value.movieEntry.title, requestBody)
+
+        val call = CMSApi.retrofitService.uploadMovie(multipartBody)
+
+        call.enqueue(object : retrofit2.Callback<ResponseBody> {
+            override fun onResponse(
+                call: retrofit2.Call<ResponseBody>,
+                response: retrofit2.Response<ResponseBody>
+            ) {
+                if (response.isSuccessful) {
+                    Log.d("MainActivity", "Upload successful: ${response.body()?.string()}")
+                } else {
+                    Log.e("MainActivity", "Upload failed: ${response.errorBody()?.string()}")
+                }
+            }
+
+            override fun onFailure(call: retrofit2.Call<ResponseBody>, t: Throwable) {
+                Log.e("MainActivity", "Error uploading video", t)
+            }
+        })
+    }
+
 }

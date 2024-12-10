@@ -24,7 +24,7 @@ object Datasource {
         User(id = 15, username = "Mallory", password = "mmm", email = "mallory@attack.com", isAdmin = true, birthdate = LocalDate(1984, 1, 1), salt = "")
     )
 
-    val movies = listOf(
+   /* val movies = listOf(
         Movie(1, "Inception", "A mind-bending thriller", 2010, 1, 148, listOf("Sci-Fi", "Thriller")),
         Movie(2, "The Matrix", "A hacker discovers reality is an illusion", 1999, 2, 136, listOf("Sci-Fi", "Action")),
         Movie(3, "The Shawshank Redemption", "A man finds hope in prison", 1994, 3, 142, listOf("Drama")),
@@ -41,7 +41,7 @@ object Datasource {
         Movie(14, "Titanic", "A romance blossoms on a doomed ship", 1997, 2, 195, listOf("Drama", "Romance")),
         Movie(15, "Saving Private Ryan", "A mission to save one soldier", 1998, 3, 169, listOf("Action", "War"))
     )
-
+*/
 
     val genres = listOf(
         "Action","Animation","Comedy","Drama","Documentary","Horror","Sci-Fi","Romance","Thriller"

@@ -30,7 +30,7 @@ data class MainUiState(
     val currentScreen : MainScreens = MainScreens.UserList,
     val expandedCardId : Int = -1,  //id for the selected movie or user card
     val userList : List<User> = listOf(),
-    val movieList : List<Movie> = listOf(), //receive the movie count for now....
+    val movieList : List<Movie> = listOf()
 )
 
 
@@ -47,7 +47,7 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
 
     fun setCurrentScreen(screen: MainScreens){
         _mainUiState.update {
-            MainUiState(currentScreen = screen)
+            currentState -> currentState.copy(currentScreen = screen)
         }
     }
 
@@ -66,6 +66,7 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
         _selectedId.value = null
         _dialogState.value = false
     }
+
 
     fun confirmDelete(onDelete: (Int) -> Unit) {
         _selectedId.value?.let { id ->
@@ -94,8 +95,7 @@ class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewM
                 withContext(Dispatchers.IO) { CMSApi.retrofitService.getUsers() }
             }.onSuccess { userList ->
                 _mainUiState.update { currentState ->
-                    currentState.copy(userList = userList)
-                }
+                    currentState.copy(userList = userList) }
             }.onFailure { exception ->
                 handleExceptions(exception)
             }
