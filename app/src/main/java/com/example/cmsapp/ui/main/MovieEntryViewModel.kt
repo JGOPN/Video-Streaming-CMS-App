@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import java.io.InputStream
 import java.time.LocalDateTime
@@ -126,9 +127,6 @@ class MovieEntryViewModel() : ViewModel(){
             }.onSuccess { response ->
                 if (response.isSuccessful) {
                     Log.d("MainActivity", "Movie added successfully")
-                    /*if(!_movieEntryState.value.urlFieldEnabled){//user selected a local file to upload
-                        uploadVideo(_movieEntryState.value.filePath)
-                    }*/
                     onResult(true)
                 } else {
                     Log.e("MainActivity", "Failed to add movie: ${response.code()} ${response.message()}")

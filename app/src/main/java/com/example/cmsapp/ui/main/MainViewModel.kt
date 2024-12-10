@@ -36,6 +36,11 @@ data class MainUiState(
 
 class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewModel() {
 
+    init {
+        getUserList()
+        getMovieList()
+    }
+
     private val _mainUiState = MutableStateFlow(MainUiState())
     val mainUiState: StateFlow<MainUiState> = _mainUiState.asStateFlow()
 

@@ -7,6 +7,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
@@ -40,7 +41,9 @@ interface ApiService {
 
     @Multipart
     @POST("movies/upload")
-    fun uploadMovie(@Part movie: MultipartBody.Part): Call<ResponseBody>
+    fun uploadMovie(
+        @Part movie: MultipartBody.Part,
+    ): Call<ResponseBody>
 
     @GET("users")
     suspend fun getUsers(): List<User>

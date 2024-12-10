@@ -51,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cmsapp.R
+import com.example.cmsapp.data.Datasource
 import com.example.cmsapp.model.Movie
 import com.example.cmsapp.model.User
 import com.example.cmsapp.ui.components.ConfirmationDialog
@@ -61,11 +62,8 @@ import com.example.cmsapp.ui.theme.CMSappTheme
 fun MainScreen(mainViewModel: MainViewModel = viewModel()) {
     val mainUiState by mainViewModel.mainUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-    val triedFetchingUsers = remember {  mutableStateOf(false) } //if true, tried to fetch users
 
     Log.d("MainActivity","MainScreen recompose triggered. Current screen: ${mainUiState.currentScreen}")
-    Log.d("MainActivity","tried fetching users: ${triedFetchingUsers.value}")
-
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -83,24 +81,24 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()) {
         },
     ) { innerPadding ->
 
-            if (mainUiState.currentScreen == MainScreens.UserList && mainUiState.userList.isEmpty() && !triedFetchingUsers.value) {
-                println("calling getUserList")
-                mainViewModel.getUserList()
-                triedFetchingUsers.value = true
-            }
-
-            if (mainUiState.currentScreen == MainScreens.MovieList) {
-                mainViewModel.getMovieList()
-            }
-
         when (mainUiState.currentScreen) {
             MainScreens.UserList -> {
                 if (mainUiState.userList.isEmpty()) {
                     println("Showing error")
-                    ShowError()
+                    ShowError("users")
                 } else {
                     println("Showing list")
-                    LazyCardList(mainViewModel, innerPadding, mainUiState)
+                    LazyCardList(
+                        innerPadding = innerPadding,
+                        mainUiState = mainUiState,
+                        dialogState = mainViewModel.dialogState.value,
+                        selectedUserId = mainViewModel.selectedUserId.value,
+                        onClickCard = mainViewModel::toggleCardExpansion,
+                        hideDialog = mainViewModel::hideDialog,
+                        showDialog = mainViewModel::showDialog,
+                        confirmDelete = mainViewModel::confirmDelete,
+                        deleteItem = mainViewModel::deleteUser,
+                    )
                 }
             }
 
@@ -108,7 +106,17 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()) {
                 if (mainUiState.movieList.isEmpty()) {
                     ShowError()
                 } else {
-                    LazyCardList(mainViewModel, innerPadding, mainUiState)
+                    LazyCardList(
+                        innerPadding = innerPadding,
+                        mainUiState = mainUiState,
+                        dialogState = mainViewModel.dialogState.value,
+                        selectedUserId = mainViewModel.selectedUserId.value,
+                        onClickCard = mainViewModel::toggleCardExpansion,
+                        hideDialog = mainViewModel::hideDialog,
+                        showDialog = mainViewModel::showDialog,
+                        confirmDelete = mainViewModel::confirmDelete,
+                        deleteItem = mainViewModel::deleteMovie,
+                    )
                 }
             }
 
@@ -121,23 +129,24 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()) {
 
 @Composable
 fun LazyCardList(
-    mainViewModel: MainViewModel,
     innerPadding: PaddingValues,
-    mainUiState: MainUiState
+    mainUiState: MainUiState,
+    dialogState: Boolean,
+    selectedUserId: Int?,
+    onClickCard: (Int) -> Unit,
+    hideDialog: () -> Unit,
+    showDialog: (Int) -> Unit,
+    confirmDelete: ((Int) -> Unit) -> Unit,
+    deleteItem: (Int) -> Unit,
 ){
-    val dialogState by mainViewModel.dialogState
-    val selectedUserId by mainViewModel.selectedUserId
-    val onClickCard: (Int) -> Unit = mainViewModel::toggleCardExpansion
-
 
     ConfirmationDialog(//confirmation dialog for deleting users/movies. Opens when isVisible=true.
         selectedItem =
             if  (mainUiState.currentScreen==MainScreens.UserList) mainUiState.userList.find { it.id == selectedUserId }?.username //gets username/movietitle from list or null
             else mainUiState.movieList.find { it.id == selectedUserId }?.title,
         isVisible = dialogState,
-        onDismissRequest = { mainViewModel.hideDialog() },
-        onAcceptRequest = {  if(mainUiState.currentScreen==MainScreens.UserList) mainViewModel.confirmDelete(mainViewModel::deleteUser)
-                            else mainViewModel.confirmDelete (mainViewModel::deleteMovie) }
+        onDismissRequest = hideDialog,
+        onAcceptRequest = {  confirmDelete(deleteItem) }
     )
 
     LazyColumn(modifier = Modifier
@@ -155,7 +164,7 @@ fun LazyCardList(
                     user = item,
                     isExpanded = mainUiState.expandedCardId == item.id,
                     onClickCard = {onClickCard(item.id)},
-                    onShowDialog = mainViewModel::showDialog,
+                    onShowDialog = showDialog,
                     modifier = Modifier.padding(4.dp)
                 )
             }
@@ -172,7 +181,7 @@ fun LazyCardList(
                     movie = item,
                     isExpanded = mainUiState.expandedCardId == item.id,
                     onClickCard = {onClickCard(item.id)},
-                    onShowDialog = mainViewModel::showDialog,
+                    onShowDialog = showDialog,
                     modifier = Modifier.padding(4.dp)
                 )
             }
@@ -315,10 +324,11 @@ fun MovieCard(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 3,
                 )
+
             }
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Genre(s): ${movie.genres}",
+                    text = "Genre(s): ${movie.genres.joinToString(", ")}",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
@@ -417,7 +427,7 @@ fun ShowError(str: String = "movies") {
 @Composable
 fun MainPreview() {
     CMSappTheme{
-        MainScreen()
-        //MovieCard(isExpanded = true,movie = Datasource.movies[9], onClickCard = {}, onShowDialog = {})
+        //MainScreen()
+        MovieCard(isExpanded = true,movie = Datasource.movies[8], onClickCard = {}, onShowDialog = {})
     }
 }

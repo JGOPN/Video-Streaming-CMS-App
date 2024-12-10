@@ -128,6 +128,8 @@ fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
             VideoPicker(onMovieSelect = {
                 movieEntryViewModel.toggleUrlField(false) //disable textField if file is selected
                 movieEntryViewModel.updateMovieUri(it) //sets the uri in movieEntryState (we use it to get stream later)
+            }, onCancel = {
+                movieEntryViewModel.toggleUrlField(true)
             })
 
             if(!hasPermission.value)  Text(text = "File access permission denied.",textAlign = TextAlign.Center, color = Color.Red)
@@ -152,7 +154,7 @@ fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
         Button(
             //if user wrote url in url bar, set the movieEntryState.movieEntry.movieUrl to it.
             onClick = {
-                if(movieEntryState.movieUrl.isNotBlank()) movieEntryViewModel.updateMovieEntryState(movieEntry.copy(movieUrl = movieEntryState.movieUrl))
+                if(movieEntryState.movieUrl.isNotBlank() && movieEntryState.urlFieldEnabled) movieEntryViewModel.updateMovieEntryState(movieEntry.copy(movieUrl = movieEntryState.movieUrl))
                 movieEntryViewModel.toggleConfirmationDialog()
             },
             modifier = Modifier.fillMaxWidth()
