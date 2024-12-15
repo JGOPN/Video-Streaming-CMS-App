@@ -57,7 +57,7 @@ fun AddMovieScreen(movieEntryViewModel: MovieEntryViewModel = viewModel()){
         val errorList = validateInputs()
         if(errorList.isNotEmpty())
             MinimalDialog(
-                messageList = validateInputs(),
+                messageList = errorList,
                 onDismissRequest = {movieEntryViewModel.toggleConfirmationDialog()}
             )
         else{

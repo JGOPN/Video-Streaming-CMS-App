@@ -1,6 +1,7 @@
 package com.example.cmsapp.ui.main
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +48,8 @@ fun AddUserScreen(
     val validateInputs = userEntryViewModel::validateUserEntry
     val onUpdate = userEntryViewModel::updateUserEntryState
     val onSubmit: ((Boolean) -> Unit) -> Unit = userEntryViewModel::addUser
+    val context = LocalContext.current
+
 
     //When user clicks submit, may open alertDialog if form not valid, otherwise triggers onSubmit()
     if(userEntryState.isDialogOpen){
@@ -53,10 +59,21 @@ fun AddUserScreen(
                 messageList = errorList,
                 onDismissRequest = {userEntryViewModel.toggleConfirmationDialog()}
             )
-        else
-        {
+        else {
             userEntryViewModel.toggleConfirmationDialog()
-            onSubmit() { isSuccess ->
+            LaunchedEffect(Unit) {
+                userEntryViewModel.signUpUser(
+                    userEntryState.userEntry.email,
+                    userEntryState.password,
+                    onSuccess = {
+                        Toast.makeText(context, "User added successfully", Toast.LENGTH_LONG).show()
+                    },
+                    onFailure = { errorMessage ->
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+            onSubmit() { isSuccess -> //addUser adds user to application server db
                 addSuccessful.value = isSuccess
             }
         }
@@ -74,7 +91,8 @@ fun AddUserScreen(
             onValueChange = {  onUpdate(userEntry.copy(username = it)) },
             label = { Text(text="Name") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, capitalization = KeyboardCapitalization.Words)
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
@@ -87,9 +105,18 @@ fun AddUserScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
-            value = userEntryState.plainPassword,
-            onValueChange = { userEntryViewModel.updatePlainPassword(it) },
+            value = userEntryState.password,
+            onValueChange = { userEntryViewModel.updatePassword(it) },
             label = { Text("Password") },
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        TextField(
+            value = userEntryState.confirmPassword,
+            onValueChange = { userEntryViewModel.updateConfirmPassword(it) },
+            label = { Text("Confirm password") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
@@ -144,6 +171,6 @@ fun AddUserScreen(
 @Composable
 fun AddUserPreview() {
     CMSappTheme{
-        //AddUserScreen({}, userEntryState = UserEntryState(Datasource.users[0]),{})
+        AddUserScreen()
     }
 }

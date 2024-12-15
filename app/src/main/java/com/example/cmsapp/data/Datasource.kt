@@ -6,23 +6,6 @@ import kotlinx.datetime.LocalDate
 
 
 object Datasource {
-    val users = listOf(
-        User(id = 1, username = "Joao", password = "ffff", email = "jj@gmail.com", isAdmin = true, birthdate = LocalDate(1985, 1, 1), salt = ""),
-        User(id = 2, username = "Jeswus", password = "aaa", email = "jc@heavn.com", isAdmin = false, birthdate = LocalDate(1992, 1, 1), salt = ""),
-        User(id = 3, username = "Maria", password = "bbb", email = "maria@gmail.com", isAdmin = false, birthdate = LocalDate(1990, 1, 1), salt = ""),
-        User(id = 4, username = "Napoleao", password = "aaaa", email = "napo@leao.fr", isAdmin = true, birthdate = LocalDate(1980, 1, 1), salt = ""),
-        User(id = 5, username = "Alice", password = "ccc", email = "alice@wonderland.com", isAdmin = true, birthdate = LocalDate(1988, 1, 1), salt = ""),
-        User(id = 6, username = "Bob", password = "ddd", email = "bob@builder.com", isAdmin = false, birthdate = LocalDate(1995, 1, 1), salt = ""),
-        User(id = 7, username = "Carol", password = "eee", email = "carol@network.com", isAdmin = true, birthdate = LocalDate(1987, 1, 1), salt = ""),
-        User(id = 8, username = "Dave", password = "fff", email = "dave@tech.com", isAdmin = false, birthdate = LocalDate(1993, 1, 1), salt = ""),
-        User(id = 9, username = "Eve", password = "ggg", email = "eve@security.com", isAdmin = true, birthdate = LocalDate(1991, 1, 1), salt = ""),
-        User(id = 10, username = "Frank", password = "hhh", email = "frank@data.com", isAdmin = false, birthdate = LocalDate(1989, 1, 1), salt = ""),
-        User(id = 11, username = "Grace", password = "iii", email = "grace@compute.com", isAdmin = true, birthdate = LocalDate(1986, 1, 1), salt = ""),
-        User(id = 12, username = "Heidi", password = "jjj", email = "heidi@crypto.com", isAdmin = false, birthdate = LocalDate(1994, 1, 1), salt = ""),
-        User(id = 13, username = "Ivan", password = "kkk", email = "ivan@risk.com", isAdmin = true, birthdate = LocalDate(1982, 1, 1), salt = ""),
-        User(id = 14, username = "Judy", password = "lll", email = "judy@codes.com", isAdmin = false, birthdate = LocalDate(1990, 1, 1), salt = ""),
-        User(id = 15, username = "Mallory", password = "mmm", email = "mallory@attack.com", isAdmin = true, birthdate = LocalDate(1984, 1, 1), salt = "")
-    )
 
     val movies = listOf(
         Movie(1, "Inception", "A mind-bending thriller", 2010, 1, 148, listOf("Sci-Fi", "Thriller")),
@@ -43,7 +26,7 @@ object Datasource {
     )
 
     val genres = listOf(
-        "Action","Animation","Comedy","Drama","Documentary","Horror","Sci-Fi","Romance","Thriller"
+        "Action","Animation","Comedy","Drama","Documentary","Horror","Sci-Fi","Romance","Thriller","Musical"
     )
 
 }

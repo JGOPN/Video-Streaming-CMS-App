@@ -5,31 +5,32 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cmsapp.model.User
 import com.example.cmsapp.network.CMSApi
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.*
-import java.security.SecureRandom
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.PBEKeySpec
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 
 data class UserEntryState(
-    val userEntry : User = User(0,"","",LocalDate(2000,1,1),"","",false),
+    val userEntry : User = User(0,"","",LocalDate(2000,1,1),false),
+    val password: String = "",
+    val confirmPassword : String = "",
     val isDialogOpen : Boolean = false,
-    val plainPassword : String = ""
 )
 
 class UserEntryViewModel() : ViewModel() {
     private val _userEntryState = MutableStateFlow(UserEntryState())
     val userEntryState: StateFlow<UserEntryState> = _userEntryState.asStateFlow()
+    
 
     fun updateUserEntryState(userEntry: User = _userEntryState.value.userEntry) {
         _userEntryState.update {
@@ -37,9 +38,15 @@ class UserEntryViewModel() : ViewModel() {
         }
     }
 
-    fun updatePlainPassword(pwd: String){
+    fun updatePassword(pwd: String){
         _userEntryState.update {
-                currentState -> currentState.copy(plainPassword = pwd)
+                currentState -> currentState.copy(password = pwd)
+        }
+    }
+
+    fun updateConfirmPassword(pwd: String){
+        _userEntryState.update {
+                currentState -> currentState.copy(confirmPassword = pwd)
         }
     }
 
@@ -52,7 +59,7 @@ class UserEntryViewModel() : ViewModel() {
     fun validateUserEntry() : List<String>{
         val errorList = mutableListOf<String>()
         val userEntry = _userEntryState.value.userEntry
-        val password = _userEntryState.value.plainPassword
+        val password = _userEntryState.value.password
 
         if (userEntry.username.isBlank())
             errorList.add("Username cannot be blank.")
@@ -61,12 +68,15 @@ class UserEntryViewModel() : ViewModel() {
             errorList.add("Username must be at least 6 characters long.")
 
         // Validate password
-        if (password.length < 8)
-            errorList.add("Password must be at least 8 characters long.")
+        if (password.length < 6)
+            errorList.add("Password must be at least 6 characters long.")
         if (!password.any { it.isDigit() })
             errorList.add("Password must contain at least one number.")
         if (!password.any { it.isUpperCase() })
             errorList.add("Password must contain at least one uppercase letter.")
+
+        if(password != _userEntryState.value.confirmPassword)
+            errorList.add("Passwords don't match.")
 
         val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
         if (!emailRegex.matches(userEntry.email))
@@ -80,14 +90,37 @@ class UserEntryViewModel() : ViewModel() {
         return errorList
         }
 
-    private fun generatePassword(){
-        val salt = generateSalt()
-        val hashedPassword = hashPassword(_userEntryState.value.plainPassword, salt)
-        updateUserEntryState(_userEntryState.value.userEntry.copy(password = hashedPassword, salt = salt))
+    private suspend fun signUp(email: String, password: String): Result<Unit> {
+            return try {
+                FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password).await()
+                Result.success(Unit)
+            } catch (e: FirebaseAuthException) {
+                Result.failure(e) // Handle Firebase-specific errors
+            } catch (e: Exception) {
+                Result.failure(e) // Handle general exceptions
+            }
+    }
+
+    fun signUpUser(email: String, password: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        viewModelScope.launch {
+            signUp(email, password).onSuccess {
+                onSuccess()
+            }.onFailure { exception ->
+                val errorMessage = when (exception) {
+                    is FirebaseAuthUserCollisionException -> when (exception.errorCode) {
+                        "ERROR_EMAIL_ALREADY_IN_USE" -> "Email is already in use by a different account."
+                        "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" -> "Email address in use by another account."
+                        "ERROR_CREDENTIAL_ALREADY_IN_USE" -> "Credentials already in use."
+                        else -> "Signup failed. Try again."
+                    }
+                    else -> "An unexpected error occurred."
+                }
+                onFailure(errorMessage)
+            }
+        }
     }
 
     fun addUser(onResult: (Boolean) -> Unit){
-        generatePassword() // generates a salt, hashes the plain password with salt
         val userEntry = _userEntryState.value.userEntry
         Log.d("MainActivity","adding user ${userEntry.username}")
 
@@ -108,24 +141,4 @@ class UserEntryViewModel() : ViewModel() {
             }
         }
     }
-}
-
-@OptIn(ExperimentalEncodingApi::class)
-private fun generateSalt(): String {
-    val random = SecureRandom()
-    val salt = ByteArray(16)
-    random.nextBytes(salt)
-    return Base64.Default.encode(salt)
-}
-
-@OptIn(ExperimentalEncodingApi::class)
-fun hashPassword(password: String, salt: String): String {
-    val iterations = 65536
-    val keyLength = 256
-    val saltBytes = Base64.Default.decode(salt)
-
-    val spec = PBEKeySpec(password.toCharArray(), saltBytes, iterations, keyLength)
-    val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-    val hash = factory.generateSecret(spec).encoded
-    return Base64.Default.encode(hash)
 }

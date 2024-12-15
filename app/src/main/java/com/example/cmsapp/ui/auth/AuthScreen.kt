@@ -1,6 +1,6 @@
 package com.example.cmsapp.ui.auth
 
-import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -40,10 +42,9 @@ import com.example.cmsapp.ui.theme.CMSappTheme
 @Composable
 fun AuthBaseScreen(onLogin: () -> Unit, modifier: Modifier, authViewModel : AuthViewModel = viewModel()){
     val authUiState by authViewModel.authUiState.collectAsState()
-
-    //When user clicks submit, may open alertDialog if form not valid, otherwise triggers onSubmit()
-    //For some reason this dialog doesnt center text??
-    if(authUiState.isDialogOpen){
+    val context = LocalContext.current
+    
+    if(authUiState.isDialogOpen){ //dialog opens when user clicks submit and form validation fails
         val errorList = authViewModel.validateLoginInput()
         if(errorList.isNotEmpty())
             MinimalDialog(
@@ -51,10 +52,27 @@ fun AuthBaseScreen(onLogin: () -> Unit, modifier: Modifier, authViewModel : Auth
                 onDismissRequest = {authViewModel.toggleConfirmationDialog()}
             )
         else
-            onLogin()
+            LaunchedEffect(Unit) {
+                authViewModel.checkUserIsAdmin(authUiState.email) { isAdmin -> //check if user is admin on db
+                    if(isAdmin){
+                        authViewModel.logInUser( //login using firebase
+                            email = authUiState.email,
+                            password = authUiState.password,
+                            onSuccess = {
+                                onLogin() // Navigate to the main screen
+                            },
+                            onFailure = { errorMessage ->
+                                Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }
+                }
+            }
     }
 
-    Column(modifier = Modifier.padding(24.dp),
+    Scaffold {  innerPadding ->
+
+    Column(modifier = Modifier.padding(innerPadding).fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally) {
         Image(painter = painterResource(R.drawable.logo), colorFilter = ColorFilter.tint(Color.White),
@@ -62,9 +80,9 @@ fun AuthBaseScreen(onLogin: () -> Unit, modifier: Modifier, authViewModel : Auth
                 .size(100.dp)
                 .padding(10.dp))
         TextField(
-            value = authUiState.username,
-            onValueChange = {authViewModel.updateUiState(username = it)},
-            label = { Text("Username") },
+            value = authUiState.email,
+            onValueChange = {authViewModel.updateUiState(email = it)},
+            label = { Text("E-mail") },
             singleLine = true
         )
         TextField(
@@ -79,6 +97,8 @@ fun AuthBaseScreen(onLogin: () -> Unit, modifier: Modifier, authViewModel : Auth
         LoginScreen(onSubmit = {
             authViewModel.toggleConfirmationDialog() },
             modifier = modifier)
+    }
+
     }
 }
 

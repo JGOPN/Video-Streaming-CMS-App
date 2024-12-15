@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -85,7 +86,7 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()) {
             MainScreens.UserList -> {
                 if (mainUiState.userList.isEmpty()) {
                     println("Showing error")
-                    ShowError("users")
+                    ShowError("users", mainViewModel::getUserList)
                 } else {
                     println("Showing list")
                     LazyCardList(
@@ -104,7 +105,7 @@ fun MainScreen(mainViewModel: MainViewModel = viewModel()) {
 
             MainScreens.MovieList -> {
                 if (mainUiState.movieList.isEmpty()) {
-                    ShowError()
+                    ShowError(onClick = mainViewModel::getMovieList)
                 } else {
                     LazyCardList(
                         innerPadding = innerPadding,
@@ -405,21 +406,20 @@ fun CMSBottomAppBar(mainUiState: MainUiState, onClickAppbarIcon : (MainScreens) 
 }
 
 @Composable
-fun ShowLoading() {
-        Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            Image(painter = painterResource(R.drawable.loading_img), contentDescription = "loading", modifier = Modifier.size(300.dp))
-        }
-}
-
-@Composable
-fun ShowError(str: String = "movies") {
+fun ShowError(str: String = "movies", onClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
         Icon(
             Icons.Rounded.Warning,
             contentDescription = "warning",
-            tint = Color.Red
+            tint = Color.Red,
+            modifier = Modifier.size(30.dp)
         )
         Text(text = "Failed to fetch $str. Server is offline or you're not connected to the internet", textAlign = TextAlign.Center)
+        Button(
+            onClick = onClick
+        ) {
+            Text(text = "Retry", textAlign = TextAlign.Center)
+        }
     }
 }
 

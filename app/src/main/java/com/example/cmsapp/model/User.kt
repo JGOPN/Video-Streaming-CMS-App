@@ -12,9 +12,6 @@ data class User(
     val username : String,
     val email : String,
     val birthdate: LocalDate,
-    @SerialName("password_hash")
-    val password : String,
-    val salt: String,
     @SerialName("is_admin")
     val isAdmin : Boolean
 )

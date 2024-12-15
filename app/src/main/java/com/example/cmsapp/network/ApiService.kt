@@ -20,7 +20,8 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 
 private const val BASE_URL =
-        "http://192.168.1.72:8080" //local machine ip
+        //"http://192.168.1.72:8080" //local machine ip
+        "http://35.204.253.240:8080/" //remote ip
 
 private val retrofit = Retrofit.Builder()
     .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
@@ -48,15 +49,14 @@ interface ApiService {
     @GET("users")
     suspend fun getUsers(): List<User>
 
+    @GET("users/{email}")
+    suspend fun getUser(@Path("email") email: String): Response<User>
+
     @DELETE("users/{id}")
     suspend fun deleteUser(@Path("id") userId: Int): Response<Unit>
 
     @POST("users")
     suspend fun addUser(@Body user: User): Response<Unit>
-
-    @GET("genres")
-    suspend fun getGenres(): List<String>
-
 }
 
 // A public Api object that exposes the lazy-initialized Retrofit service

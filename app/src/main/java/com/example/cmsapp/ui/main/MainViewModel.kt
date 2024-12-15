@@ -33,8 +33,7 @@ data class MainUiState(
     val movieList : List<Movie> = listOf()
 )
 
-
-class MainViewModel( /*private val itemsRepository: ItemsRepository */ ) : ViewModel() {
+class MainViewModel : ViewModel() {
 
     init {
         getUserList()

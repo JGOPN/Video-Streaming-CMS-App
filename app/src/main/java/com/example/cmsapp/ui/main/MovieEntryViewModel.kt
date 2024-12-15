@@ -43,6 +43,7 @@ data class MovieEntryState(
 )
 
 class MovieEntryViewModel() : ViewModel(){
+
     private val _movieEntryState = MutableStateFlow(MovieEntryState())
     val movieEntryState: StateFlow<MovieEntryState> = _movieEntryState.asStateFlow()
 
