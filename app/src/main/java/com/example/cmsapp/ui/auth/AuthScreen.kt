@@ -66,6 +66,9 @@ fun AuthBaseScreen(onLogin: () -> Unit, modifier: Modifier, authViewModel : Auth
                             }
                         )
                     }
+                    else{
+                        Toast.makeText(context, "User does not have admin permissions.",Toast.LENGTH_LONG).show()
+                    }
                 }
             }
     }
